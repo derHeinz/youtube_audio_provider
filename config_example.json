@@ -1,0 +1,5 @@
+{
+	"webserver_port": 1234,
+	"ffmpeg_location": "/etc/ffmpeg/bin"
+}
+	
