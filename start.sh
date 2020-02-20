@@ -1,1 +1,1 @@
-nohup python main.py &>/dev/null &
+nohup python3 main.py &>/dev/null &
