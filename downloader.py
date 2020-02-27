@@ -30,10 +30,10 @@ class Downloader(object):
         # find [ffmpeg] Destination: <now the file begins> \r\n Deleting original file ....
         start_str = '[ffmpeg] Destination: '
         start_idx = result.stdout.find(start_str) + len(start_str)
-        end_idx = result.stdout.find('Deleting original', start_idx)
+        end_idx = result.stdout.find('\n', start_idx)
         
         content = result.stdout[start_idx:end_idx]
-        # cut out the path = cut out lentgh of path
+        # cut out the path = cut out length of path
         file_only = content[len(destination_path):].strip('\\/')
         return file_only
     
