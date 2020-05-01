@@ -1,0 +1,74 @@
+<html>
+<head>
+
+    <title>Audio Files $updated</title>
+	<style>
+		* {
+        margin: 0; padding: 0;
+        }
+         
+        ul {
+          list-style-type: none;
+          /*width: 500px;*/
+        }
+        
+        h1 {
+          font: bold 12px/1.5 Helvetica, Verdana, sans-serif;
+        }
+        
+        h3 {
+          font: bold 10px/1.5 Helvetica, Verdana, sans-serif;
+        }
+                  
+        li {
+          padding: 2px;
+          overflow: auto;
+        }
+         
+        li:hover {
+          background: #eee;
+          cursor: pointer;
+        }
+        
+        .main {
+            margin: 10px;
+        }
+        
+        .lower {
+            float: left;
+            /* padding-right: 15px; */
+            margin-right: 15px;
+            background-color: grey;
+            font: 200 8px/1.5 Georgia, Times New Roman, serif;
+        }
+        
+	</style>
+    <script>
+        var post_voicecommand = function(elmnt) {
+            
+            var first_div = elmnt.getElementsByTagName('div')[0];
+            var voicecommand_first_div = first_div.textContent;
+            
+            const xhr = new XMLHttpRequest()
+            xhr.onload = function() {
+                // nothing
+            };
+            
+            xhr.open("POST", $callurl);
+            xhr.setRequestHeader("Content-type", "text/plain");
+            xhr.send(voicecommand_first_div);
+        }
+    </script>
+
+	<h1 align="center">Audio Files</h1>
+	<h3 align="center">Updated $updated</h3>
+</head>
+<body>
+
+<div class="main">
+  <ul>
+    $content
+  </ul>
+</div>
+</body>
+</html>

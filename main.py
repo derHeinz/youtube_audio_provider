@@ -7,6 +7,7 @@ import os
 
 from webserver import Webserver
 from downloader import Downloader
+from cache_html_exporter import CacheHTMLExporter
 
 def load_config(): 
     # load configuration from config file
@@ -17,8 +18,9 @@ def main():
 
     config_data = load_config()
 
+    exporter = CacheHTMLExporter(config_data['cache_export_config'])
     dl = Downloader(config_data['ffmpeg_location'])
-    ws = Webserver(config_data['webserver_port'], dl)
+    ws = Webserver(config_data['webserver_port'], dl, exporter)
     
     # incase this is run as deamon
     # ws.setDaemon(True)

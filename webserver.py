@@ -18,7 +18,7 @@ class Webserver(Thread):
     AUDIO_DIR_NAME = 'audio'
     AUDIO_DIR = '/' + AUDIO_DIR_NAME + '/'
 
-    def __init__(self, port, downloader):
+    def __init__(self, port, downloader, exporter):
         """Create a new instance of the flask app"""
         super(Webserver, self).__init__()
 
@@ -28,9 +28,11 @@ class Webserver(Thread):
 
         self.audio_file_directory = audio_dir
         self.downloader = downloader
+        self.exporter = exporter
         self.cachefile = os.path.join(os.path.dirname(__file__), "cache.json")
         self.cache = {}
         self._load_cache()
+        self.exporter.export()
 
         self.app = Flask(__name__)
         self.app.config['port'] = port
@@ -120,6 +122,7 @@ class Webserver(Thread):
             
             # put into cache
             self._put_to_cache(quoted_search, result)
+            self.exporter.export()
             
         # put together the result URL
         return self.AUDIO_DIR + result
