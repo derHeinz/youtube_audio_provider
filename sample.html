@@ -46,15 +46,17 @@
     <script>
         var post_voicecommand = function(elmnt) {
             
+            var prefix = "$prefix";
             var first_div = elmnt.getElementsByTagName('div')[0];
             var voicecommand_first_div = first_div.textContent;
+            
             
             const xhr = new XMLHttpRequest()
             xhr.onload = function() {
                 // nothing
             };
             
-            xhr.open("POST", $callurl);
+            xhr.open("POST", "$callurl");
             xhr.setRequestHeader("Content-type", "text/plain");
             xhr.send(voicecommand_first_div);
         }

@@ -11,9 +11,10 @@ class CacheHTMLExporter(object):
 
     def __init__(self, config):
         self.cachefile = os.path.join(os.path.dirname(__file__), "cache.json")
-        self.template = config["template"]
-        self.filename = config["file"]
-        self.callurl = config["callurl"]
+        self.template = config.get("template", "sample.html")
+        self.filename = config.get("file", "voice_cache.html")
+        self.callurl = config.get("callurl", "http://localhost:80")
+        self.prefix = config.get("prefix", "")
         
     def one_row_with_several_items(self, head, texts):
         text = "\n".join(map(lambda t: '<div class="lower">' + t + "</div>", texts))
@@ -61,6 +62,6 @@ class CacheHTMLExporter(object):
         current_time = now.strftime("%d.%m.%Y %H:%M")
         
         templ = Template(self._load_template())
-        file_text = templ.safe_substitute(content=content_text, updated=current_time, callurl='"' + self.callurl + '"')
+        file_text = templ.safe_substitute(content=content_text, updated=current_time, callurl=self.callurl, prefix=self.prefix)
         with codecs.open(self.filename, 'w', "utf-8") as outfile:
             outfile.write(file_text)
