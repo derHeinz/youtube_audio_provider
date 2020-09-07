@@ -112,11 +112,6 @@ class Webserver(Thread):
         if (cache_result is not None):
             result = cache_result
         else:
-            base_url = "https://www.youtube.com/results?search_query="
-            postfix = "&page=1"
-            
-            full_url = base_url + quoted_search + postfix
-            
             # download via youtube-dl
             result =  self.downloader.download_to(full_url, self.audio_file_directory)
             
