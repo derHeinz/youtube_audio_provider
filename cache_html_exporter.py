@@ -44,9 +44,10 @@ class CacheHTMLExporter(object):
         content_lines = []
         
         inv_map = {}
-        for key, val in data.items():
-            quoted_key = unquote(key)
-            inv_map[val] = inv_map.get(val, []) + [quoted_key]
+        if data and data.items():
+            for key, val in data.items():
+                quoted_key = unquote(key)
+                inv_map[val] = inv_map.get(val, []) + [quoted_key]
 
         content_lines = []      
         
