@@ -113,7 +113,7 @@ class Webserver(Thread):
             result = cache_result
         else:
             # download via youtube-dl
-            result =  self.downloader.download_to(quoted_search, self.audio_file_directory)
+            result =  self.downloader.download_to(search, self.audio_file_directory)
             
             # put into cache
             self._put_to_cache(quoted_search, result)
