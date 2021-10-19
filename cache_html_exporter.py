@@ -38,6 +38,7 @@ class CacheHTMLExporter(object):
             data = template_file.read()
             return data
             
+            
     def export(self):
         data = self._load_cache()
         content_lines = []

@@ -5,10 +5,8 @@ import sys
 import json
 import os
 
-from cache import Cache
 from webserver import Webserver
 from downloader import Downloader
-from streamextractor import Streamextractor
 from cache_html_exporter import CacheHTMLExporter
 
 def load_config(): 
@@ -21,16 +19,14 @@ def main():
     config_data = load_config()
 
     exporter = CacheHTMLExporter(config_data['cache_export_config'])
-    cache = Cache(exporter)
-    
     dl = Downloader(config_data['ffmpeg_location'])
-    ext = Streamextractor()
-    ws = Webserver(config_data['webserver_port'], dl, ext, cache)
+    ws = Webserver(config_data['webserver_port'], dl, exporter)
     
     # incase this is run as deamon
     # ws.setDaemon(True)
     
     try:
+        print("Starting Youtube Audio Provider\nPress CTRL-C to exit")
         ws.start()
     except KeyboardInterrupt:
         print("Exiting\n")
