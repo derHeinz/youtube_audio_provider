@@ -3,8 +3,8 @@ Flask==2.0.2
 Flask-SQLAlchemy==2.5.1
 SQLAlchemy==1.4.26
 itsdangerous==2.0
-Jinja2==3.0
-MarkupSafe==2.0.0rc2
+Jinja2==2.11.1
+MarkupSafe==1.1.1
 Werkzeug==2.0.2
 youtube-dl==2021.6.6
 requests===2.26.0
