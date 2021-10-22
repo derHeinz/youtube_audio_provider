@@ -38,16 +38,16 @@ class CacheHTMLExporter(object):
             data = template_file.read()
             return data
             
-            
-    def export(self):
-        data = self._load_cache()
+    def export(self, data):
+        #data = self._load_cache()
         content_lines = []
         
         inv_map = {}
-        if data and data.items():
-            for key, val in data.items():
-                quoted_key = unquote(key)
-                inv_map[val] = inv_map.get(val, []) + [quoted_key]
+        if data:
+            for ar in data:
+                unquoted_search = unquote(ar.search)
+                filename_or_stream_url = ar.filename or ar.stream_url
+                inv_map[filename_or_stream_url] = inv_map.get(filename_or_stream_url, []) + [unquoted_search]
 
         content_lines = []      
         
