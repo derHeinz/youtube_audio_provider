@@ -1,0 +1,2 @@
+rem --ffmpeg-ffmpeg D:\HeinzDaten\Projekte\Python\ffmpeg-20200216-8578433-win64-static\bin\ffmpeg.exe --ffmpeg-audio-transcode mp3 --ffmpeg-video-transcode mp4
+streamlink --player-external-http --ffmpeg-ffmpeg D:\HeinzDaten\Projekte\Python\ffmpeg-20200216-8578433-win64-static\bin\ffmpeg.exe --ffmpeg-audio-transcode mp3 --ffmpeg-video-transcode mp4 https://www.youtube.com/watch?v=_hP7EIiijTI best

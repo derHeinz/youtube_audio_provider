@@ -1,0 +1,82 @@
+<html>
+<head>
+
+    <title>Audio Files 19.10.2021 16:00</title>
+	<style>
+		* {
+        margin: 0; padding: 0;
+        }
+         
+        ul {
+          list-style-type: none;
+          /*width: 500px;*/
+        }
+        
+        h1 {
+          font: bold 12px/1.5 Helvetica, Verdana, sans-serif;
+        }
+        
+        h3 {
+          font: bold 10px/1.5 Helvetica, Verdana, sans-serif;
+        }
+                  
+        li {
+          padding: 2px;
+          overflow: auto;
+        }
+         
+        li:hover {
+          background: #eee;
+          cursor: pointer;
+        }
+        
+        .main {
+            margin: 10px;
+        }
+        
+        .lower {
+            float: left;
+            /* padding-right: 15px; */
+            margin-right: 15px;
+            background-color: grey;
+            font: 200 8px/1.5 Georgia, Times New Roman, serif;
+        }
+        
+	</style>
+    <script>
+        var post_voicecommand = function(elmnt) {
+            
+            var prefix = "adf";
+            var first_div = elmnt.getElementsByTagName('div')[0];
+            var voicecommand_first_div = first_div.textContent;
+            
+            
+            const xhr = new XMLHttpRequest()
+            xhr.onload = function() {
+                // nothing
+            };
+            
+            xhr.open("POST", "http://192.168.1.70:8080/rest/items/VoiceCommandLastResult");
+            xhr.setRequestHeader("Content-type", "text/plain");
+            xhr.send(voicecommand_first_div);
+        }
+    </script>
+
+	<h1 align="center">Audio Files</h1>
+	<h3 align="center">Updated 19.10.2021 16:00</h3>
+</head>
+<body>
+
+<div class="main">
+  <ul>
+    
+        <li onclick='post_voicecommand(this)'>
+            <h3></h3>
+            <div class="lower">kinderlied igel</div>
+<div class="lower">kinderlied</div>
+        </li>
+        
+  </ul>
+</div>
+</body>
+</html>
