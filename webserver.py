@@ -47,6 +47,7 @@ class Webserver(Thread):
         self.app.add_url_rule(rule="/audio/<path:path>", view_func=self.audio_file, methods=['GET'])
         self.app.add_url_rule(rule="/delete_by_search/<string:search>", view_func=self.delete_by_search, methods=['GET', 'POST'])
         self.app.add_url_rule(rule="/search/<string:search>", view_func=self.search, methods=['GET'])
+        self.app.add_url_rule(rule="/searchv2/<string:search>", view_func=self.searchv2, methods=['GET'])
         self.app.add_url_rule(rule="/exit", view_func=self.exit, methods=['GET', 'POST'])
 
         # register default error handler
@@ -106,4 +107,33 @@ class Webserver(Thread):
             
         # put together the result URL
         return self.AUDIO_DIR + result
+
+    def searchv2(self, search):
+        """search the string, return the url to the mp3."""
+        # search_query_extended_for youtube_dl
+        quoted_search = quote(search)
+        logger.debug("searchingv2 for file: %s" % quoted_search)
+        
+        result = {}
+        resulting_cache_filename = self.cache.retrieve_from_cache(quoted_search)
+        if (resulting_cache_filename is not None):
+            logger.debug("searchingv2 found in cache")
+            result['filename'] = resulting_cache_filename
+            result['by'] = "cache"
+            
+        else:
+            logger.debug("searchingv2 not found in cache")
+            # download via youtube-dl
+            info = self.downloader.download_to_and_return_info(search, self.audio_file_directory)
+            if (len(info) < 1):
+                return make_response(jsonify({'error': 'internal error'}), 500)
+            result = info
+            result['by'] = "download"
+
+            # put into cache
+            self.cache.put_to_cache(quoted_search, result['filename'])
+        
+        # put together the result URL
+        result['path'] = self.AUDIO_DIR + result['filename']
+        return result
         
