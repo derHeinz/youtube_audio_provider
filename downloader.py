@@ -10,16 +10,23 @@ logger = logging.getLogger(__name__)
 
 class Downloader(object):
 
+    def __init__(self, ffmpeg_location, info):
+        self.ffmpeg_location = ffmpeg_location
+        self.appinfo = info
+        self.downloader = self._determine_downloader()
 
     class Ytdlp:
 
-        def __init__(self, ffmpeg_location):
+        def __init__(self, ffmpeg_location, info):
             self.ffmpeg_location = ffmpeg_location
+
+        def get_name(self):
+            return "yt-dlp"
 
         def is_available(self):
             try:
                 res = subprocess.check_output(["yt-dlp", "--version"])
-                return True
+                return res
             except:
                 return False
 
@@ -73,13 +80,17 @@ class Downloader(object):
 
     class YoutubeDl:
 
-        def __init__(self, ffmpeg_location):
+        def __init__(self, ffmpeg_location, info):
             self.ffmpeg_location = ffmpeg_location
+            self.info = info
+        
+        def get_name(self):
+            return "youtube-dl"
 
         def is_available(self):
             try:
                 res = subprocess.check_output(["youtube-dl", "--version"])
-                return True
+                return res
             except:
                 return False
 
@@ -133,22 +144,28 @@ class Downloader(object):
             file_only = content[len(destination_path):].strip('\\/')
             return file_only
 
-
-    def __init__(self, ffmpeg_location):
-        self.ffmpeg_location = ffmpeg_location
-        self.downloader = self._determine_downloader()
+    def _check_type(self, sometype):
+        is_avail_out = sometype.is_available()
+        if (is_avail_out):
+            logger.info("using " + sometype.get_name())
+            self.appinfo.register("using", sometype.get_name())
+            is_avail_out_printable = is_avail_out.decode("utf-8").strip()
+            is_avail_out_printable = is_avail_out_printable.replace('\\r', '')
+            is_avail_out_printable = is_avail_out_printable.replace('\\n', '')
+            
+            self.appinfo.register("version", is_avail_out_printable)
+            return True
+        return False
 
     def _determine_downloader(self):
         # check yt-dlp available
-        y = Downloader.Ytdlp(self.ffmpeg_location)
-        if (y.is_available()):
-            logger.info("using ytdlp")
+        y = Downloader.Ytdlp(self.ffmpeg_location, self.appinfo)
+        if (self._check_type(y)):
             return y
 
         # check youtube-dl availability
-        y = Downloader.YoutubeDl(self.ffmpeg_location)
-        if (y.is_available()):
-            logger.info("using youtube-dl")
+        y = Downloader.YoutubeDl(self.ffmpeg_location, self.appinfo)
+        if (self._check_type(y)):
             return y
         
         raise ValueError('cannot determine downloader.')

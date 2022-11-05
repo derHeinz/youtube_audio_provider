@@ -21,7 +21,7 @@ class Webserver(Thread):
     AUDIO_DIR_NAME = 'audio'
     AUDIO_DIR = '/' + AUDIO_DIR_NAME + '/'
 
-    def __init__(self, port, downloader, exporter):
+    def __init__(self, port, downloader, exporter, info):
         """Create a new instance of the flask app"""
         super(Webserver, self).__init__()
 
@@ -30,8 +30,10 @@ class Webserver(Thread):
         audio_dir = os.path.join(dir_path, 'audio')
 
         self.audio_file_directory = audio_dir
+        info.register('audio_directory', audio_dir)
         self.downloader = downloader
         self.exporter = exporter
+        self.appinfo = info
         self.cache = cache.Cache(exporter, self.audio_file_directory)
 
         self.app = Flask(__name__)
@@ -49,6 +51,8 @@ class Webserver(Thread):
         self.app.add_url_rule(rule="/search/<string:search>", view_func=self.search, methods=['GET'])
         self.app.add_url_rule(rule="/searchv2/<string:search>", view_func=self.searchv2, methods=['GET'])
         self.app.add_url_rule(rule="/exit", view_func=self.exit, methods=['GET', 'POST'])
+        self.app.add_url_rule(rule="/info", view_func=self.info, methods=['GET'])
+
 
         # register default error handler
         self.app.register_error_handler(code_or_exception=404, f=self.not_found)
@@ -67,6 +71,9 @@ class Webserver(Thread):
         """exit program"""
         logger.debug("shutting down")
         os._exit(0)
+
+    def info(self):
+        return self.appinfo.get()
         
     def audio_file(self, path):
         """Serve files from the audio directory"""

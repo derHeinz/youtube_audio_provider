@@ -9,6 +9,7 @@ import logging
 from webserver import Webserver
 from downloader import Downloader
 from cache_html_exporter import CacheHTMLExporter
+from appinfo import AppInfo
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,11 @@ def main():
     config_data = load_config()
     setup_logging()
 
+    info = AppInfo()
+    info.register('config', config_data) # put full config into info
     exporter = CacheHTMLExporter(config_data['cache_export_config'])
-    dl = Downloader(config_data['ffmpeg_location'])
-    ws = Webserver(config_data['webserver_port'], dl, exporter)
+    dl = Downloader(config_data['ffmpeg_location'], info)
+    ws = Webserver(config_data['webserver_port'], dl, exporter, info)
     
     # incase this is run as deamon
     # ws.setDaemon(True)
