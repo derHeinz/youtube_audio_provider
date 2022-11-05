@@ -15,7 +15,7 @@ class Cache(object):
         self.cache = {}
         logger.debug("loading cache")
         self._load_cache()
-        logger.debug("loaded %d entries" % len(self.cache))
+        logger.info("loaded %d entries" % len(self.cache))
         
         self.audio_file_directory = audio_file_directory
 
