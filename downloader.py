@@ -18,7 +18,7 @@ class Downloader(object):
 
         def is_available(self):
             try:
-                res = subprocess.check_output("yt-dlp --version")
+                res = subprocess.check_output(["yt-dlp", "--version"])
                 return True
             except:
                 return False
@@ -78,7 +78,7 @@ class Downloader(object):
 
         def is_available(self):
             try:
-                res = subprocess.check_output("youtube-dl --version")
+                res = subprocess.check_output(["youtube-dl", "--version"])
                 return True
             except:
                 return False
