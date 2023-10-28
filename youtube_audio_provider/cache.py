@@ -5,19 +5,21 @@ import os
 import json
 from json.decoder import JSONDecodeError
 import logging
+import youtube_audio_provider
 
 logger = logging.getLogger(__name__)
 
 class Cache(object):
 
-    def __init__(self, exporter, audio_file_directory):
-        self.cachefile = os.path.join(os.path.dirname(__file__), "cache.json")
+    def __init__(self, exporter, info, audio_file_directory):
+        self.cachefile = "cache.json"
+        self.appinfo = info
+        self.audio_file_directory = audio_file_directory
+
         self.cache = {}
         logger.debug("loading cache")
         self._load_cache()
         logger.info("loaded %d entries" % len(self.cache))
-        
-        self.audio_file_directory = audio_file_directory
 
         self.exporter = exporter
         self.exporter.export()
@@ -29,6 +31,7 @@ class Cache(object):
                 self.cache = json.load(data_file)
             except JSONDecodeError:
                 pass
+        self.appinfo.register('cache_size', len(self.cache))
 
     def retrieve_from_cache(self, quoted_search):
         # gets value from cache, checks whether file is available, otherwise invalidates cache
@@ -50,6 +53,11 @@ class Cache(object):
         # persist into cachefile for restart
         with open(self.cachefile, 'w') as outfile:
             json.dump(self.cache, outfile)
+        
+        # export
+        self.exporter.export()
+        # report
+        self.appinfo.register('cache_size', len(self.cache))
 
     def put_to_cache(self, quoted_search, filename): 
         # put into cache the quoted_search string together with the filename
@@ -62,8 +70,6 @@ class Cache(object):
         logger.debug("putting into cache '{}'".format(simplified_string))
         
         self.store_cache()
-            
-        self.exporter.export()
 
     def remove_from_cache_by_search(self, quoted_search):
         search_result = self.retrieve_from_cache(quoted_search)

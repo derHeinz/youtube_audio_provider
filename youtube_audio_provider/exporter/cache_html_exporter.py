@@ -10,11 +10,12 @@ from string import Template
 class CacheHTMLExporter(object):
 
     def __init__(self, config):
-        self.cachefile = os.path.join(os.path.dirname(__file__), "cache.json")
-        self.template = config.get("template", "sample.html")
-        self.filename = config.get("file", "voice_cache.html")
-        self.callurl = config.get("callurl", "http://localhost:80")
-        self.prefix = config.get("prefix", "")
+        self.cachefile = config.get("cachefile", "cache.json")
+        cache_export_config = config['cache_export_config']
+        self.template = cache_export_config.get("template", os.path.join(os.path.dirname(__file__), "sample.html"))
+        self.filename = cache_export_config.get("file", "voice_cache.html")
+        self.callurl = cache_export_config.get("callurl", "http://localhost:80")
+        self.prefix = cache_export_config.get("prefix", "")
         
     def one_row_with_several_items(self, head, texts):
         text = "\n".join(map(lambda t: '<div class="lower">' + t + "</div>", texts))
