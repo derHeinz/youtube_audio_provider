@@ -127,6 +127,4 @@ config.json
 audio/
 cache.json
 voice_cache.html
-cache.json
 pidfile.pid
-cache.json
