@@ -18,7 +18,7 @@ class Downloader(object):
 
     class Ytdlp:
 
-        def __init__(self, ffmpeg_location, info):
+        def __init__(self, ffmpeg_location):
             self.ffmpeg_location = ffmpeg_location
 
         def get_name(self):
@@ -28,7 +28,7 @@ class Downloader(object):
             try:
                 res = subprocess.check_output(["yt-dlp", "--version"])
                 return res
-            except:
+            except Exception:
                 return False
 
         def find_youtube_id(self, search_string):
@@ -49,11 +49,11 @@ class Downloader(object):
         def download_youtube_id_to(self, id, destination_path):
             params = ['yt-dlp', '-x',
                       '-N', ' 4',
-                      '--audio-format', 'mp3', 
-                      '--audio-quality', '0', 
+                      '--audio-format', 'mp3',
+                      '--audio-quality', '0',
                       '--ffmpeg-location', self.ffmpeg_location]
 
-            if (destination_path != None):
+            if (destination_path is not None):
                 params.append('-o')
                 params.append(destination_path + '/' + '%(title)s.%(ext)s')
 
@@ -76,9 +76,8 @@ class Downloader(object):
 
     class YoutubeDl:
 
-        def __init__(self, ffmpeg_location, info):
+        def __init__(self, ffmpeg_location):
             self.ffmpeg_location = ffmpeg_location
-            self.info = info
 
         def get_name(self):
             return "youtube-dl"
@@ -87,7 +86,7 @@ class Downloader(object):
             try:
                 res = subprocess.check_output(["youtube-dl", "--version"])
                 return res
-            except:
+            except Exception:
                 return False
 
         def find_youtube_id(self, search_string):
@@ -113,12 +112,12 @@ class Downloader(object):
             }
 
         def download_youtube_id_to(self, id, destination_path):
-            params = ['youtube-dl', '-x', 
-                      '--audio-format', 'mp3', 
-                      '--audio-quality', '0', 
+            params = ['youtube-dl', '-x',
+                      '--audio-format', 'mp3',
+                      '--audio-quality', '0',
                       '--ffmpeg-location', self.ffmpeg_location]
 
-            if (destination_path != None):
+            if (destination_path is not None):
                 params.append('-o')
                 params.append(destination_path + '/' + '%(title)s.%(ext)s')
 
@@ -143,23 +142,23 @@ class Downloader(object):
         is_avail_out = sometype.is_available()
         if (is_avail_out):
             logger.info("using " + sometype.get_name())
-            self.appinfo.register("using", sometype.get_name())
+            self.appinfo.register("downloader.name", sometype.get_name())
             is_avail_out_printable = is_avail_out.decode("utf-8").strip()
             is_avail_out_printable = is_avail_out_printable.replace('\\r', '')
             is_avail_out_printable = is_avail_out_printable.replace('\\n', '')
 
-            self.appinfo.register("version", is_avail_out_printable)
+            self.appinfo.register("downloader.version", is_avail_out_printable)
             return True
         return False
 
     def _determine_downloader(self):
         # check yt-dlp available
-        y = Downloader.Ytdlp(self.ffmpeg_location, self.appinfo)
+        y = Downloader.Ytdlp(self.ffmpeg_location)
         if (self._check_type(y)):
             return y
 
         # check youtube-dl availability
-        y = Downloader.YoutubeDl(self.ffmpeg_location, self.appinfo)
+        y = Downloader.YoutubeDl(self.ffmpeg_location)
         if (self._check_type(y)):
             return y
 

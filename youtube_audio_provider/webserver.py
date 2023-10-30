@@ -6,7 +6,7 @@
 import os
 import time
 from threading import Thread
-from flask import Flask, send_from_directory, make_response, abort
+from flask import Flask, send_from_directory, make_response
 from flask.json import jsonify
 from werkzeug.serving import make_server
 from urllib.parse import quote
