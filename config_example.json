@@ -3,7 +3,6 @@
 	"ffmpeg_location": "/etc/ffmpeg/bin",
     "cache_export_config": {
         "file": "voice_cache.html",
-        "template": "sample.html",
         "callurl": "http://localhost:8080/rest/items/VoiceCommand"
     }
 }

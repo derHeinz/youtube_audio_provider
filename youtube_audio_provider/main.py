@@ -26,7 +26,7 @@ def setup_logging():
 
 def load_config():
     # load configuration from config file
-    with open('config.json') as data_file:    
+    with open('config.json') as data_file:
         return json.load(data_file)
 
 
