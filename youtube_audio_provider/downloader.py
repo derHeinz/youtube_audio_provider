@@ -48,15 +48,15 @@ class Downloader(object):
 
         def download_youtube_id_to(self, id, destination_path):
             params = ['yt-dlp', '-x',
-                '-N', ' 4',
-                '--audio-format', 'mp3', 
-                '--audio-quality', '0', 
-                '--ffmpeg-location', self.ffmpeg_location]
-            
+                      '-N', ' 4',
+                      '--audio-format', 'mp3', 
+                      '--audio-quality', '0', 
+                      '--ffmpeg-location', self.ffmpeg_location]
+
             if (destination_path != None):
                 params.append('-o')
                 params.append(destination_path + '/' + '%(title)s.%(ext)s')
-            
+
             # url that reads the id
             params.append('https://www.youtube.com/watch?v=' + id)
             result = subprocess.run(params, capture_output=True, encoding='utf-8')
@@ -64,11 +64,11 @@ class Downloader(object):
             if (len(result.stderr) > 0):
                 logger.error("failure running yt-dlp %s" % result.stderr)
             logger.debug("yt-dlp stdout %s" % result.stdout)
-            
+
             start_str = '[ExtractAudio] Destination: '
             start_idx = result.stdout.find(start_str) + len(start_str)
             end_idx = result.stdout.find('\n', start_idx)
-            
+
             content = result.stdout[start_idx:end_idx]
             # cut out the path = cut out length of path
             file_only = content[len(destination_path):].strip('\\/')
@@ -79,7 +79,7 @@ class Downloader(object):
         def __init__(self, ffmpeg_location, info):
             self.ffmpeg_location = ffmpeg_location
             self.info = info
-        
+
         def get_name(self):
             return "youtube-dl"
 
@@ -90,19 +90,18 @@ class Downloader(object):
             except:
                 return False
 
-        
         def find_youtube_id(self, search_string):
             params = ['youtube-dl',
-            'ytsearch:' + search_string,
-            '--get-id']
+                      'ytsearch:' + search_string,
+                      '--get-id']
             result = subprocess.run(params, capture_output=True, encoding='utf-8')
 
             return str(result.stdout).rstrip("\n")
 
         def find_youtube_info(self, search_string):
             params = ['youtube-dl',
-            'ytsearch:' + search_string,
-            '-j']
+                      'ytsearch:' + search_string,
+                      '-j']
             result = subprocess.run(params, capture_output=True, encoding='utf-8')
 
             j = json.loads(str(result.stdout).rstrip("\n"))
@@ -112,17 +111,17 @@ class Downloader(object):
                 "title": j.get('title', None),
                 "channel": j.get('channel', None)
             }
-            
+
         def download_youtube_id_to(self, id, destination_path):
             params = ['youtube-dl', '-x', 
-            '--audio-format', 'mp3', 
-            '--audio-quality', '0', 
-            '--ffmpeg-location', self.ffmpeg_location]
-            
+                      '--audio-format', 'mp3', 
+                      '--audio-quality', '0', 
+                      '--ffmpeg-location', self.ffmpeg_location]
+
             if (destination_path != None):
                 params.append('-o')
                 params.append(destination_path + '/' + '%(title)s.%(ext)s')
-            
+
             # url that reads the id
             params.append('https://www.youtube.com/watch?v=' + id)
             result = subprocess.run(params, capture_output=True, encoding='utf-8')
@@ -130,11 +129,11 @@ class Downloader(object):
             if (len(result.stderr) > 0):
                 logger.error("failure running yoututbe-dl %s" % result.stderr)
             logger.debug("youtube-dl stdout %s" % result.stdout)
-            
+
             start_str = '[ffmpeg] Destination: '
             start_idx = result.stdout.find(start_str) + len(start_str)
             end_idx = result.stdout.find('\n', start_idx)
-            
+
             content = result.stdout[start_idx:end_idx]
             # cut out the path = cut out length of path
             file_only = content[len(destination_path):].strip('\\/')
@@ -148,7 +147,7 @@ class Downloader(object):
             is_avail_out_printable = is_avail_out.decode("utf-8").strip()
             is_avail_out_printable = is_avail_out_printable.replace('\\r', '')
             is_avail_out_printable = is_avail_out_printable.replace('\\n', '')
-            
+
             self.appinfo.register("version", is_avail_out_printable)
             return True
         return False
@@ -163,7 +162,7 @@ class Downloader(object):
         y = Downloader.YoutubeDl(self.ffmpeg_location, self.appinfo)
         if (self._check_type(y)):
             return y
-        
+
         raise ValueError('cannot determine downloader.')
 
     def download_to_and_return_path(self, search_string):
@@ -179,6 +178,3 @@ class Downloader(object):
         filename = self.downloader.download_youtube_id_to(info['id'], self.audio_path)
         info['filename'] = filename
         return info
-        
-
-    
