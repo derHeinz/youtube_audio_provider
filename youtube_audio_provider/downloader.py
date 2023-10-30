@@ -4,9 +4,9 @@
 import subprocess
 import json
 import logging
-from sys import stderr
 
 logger = logging.getLogger(__name__)
+
 
 class Downloader(object):
 
@@ -32,16 +32,12 @@ class Downloader(object):
                 return False
 
         def find_youtube_id(self, search_string):
-            params = ['yt-dlp',
-            'ytsearch:' + search_string,
-            '--get-id']
+            params = ['yt-dlp', 'ytsearch:' + search_string, '--get-id']
             result = subprocess.run(params, capture_output=True, encoding='utf-8')
             return str(result.stdout).rstrip("\n")
 
         def find_youtube_info(self, search_string):
-            params = ['yt-dlp',
-            'ytsearch:' + search_string,
-            '-j']
+            params = ['yt-dlp', 'ytsearch:' + search_string, '-j']
             result = subprocess.run(params, capture_output=True, encoding='utf-8')
             j = json.loads(str(result.stdout).rstrip("\n"))
             return {
@@ -51,11 +47,11 @@ class Downloader(object):
             }
 
         def download_youtube_id_to(self, id, destination_path):
-            params = ['yt-dlp', '-x', 
-            '-N', ' 4',
-            '--audio-format', 'mp3', 
-            '--audio-quality', '0', 
-            '--ffmpeg-location', self.ffmpeg_location]
+            params = ['yt-dlp', '-x',
+                '-N', ' 4',
+                '--audio-format', 'mp3', 
+                '--audio-quality', '0', 
+                '--ffmpeg-location', self.ffmpeg_location]
             
             if (destination_path != None):
                 params.append('-o')
@@ -171,15 +167,15 @@ class Downloader(object):
         raise ValueError('cannot determine downloader.')
 
     def download_to_and_return_path(self, search_string):
-       id = self.downloader.find_youtube_id(search_string)
-       logger.debug("found youtube id %s, now downloading" % id)
-       filename = self.downloader.download_youtube_id_to(id, self.audio_path)
-       return filename
+        id = self.downloader.find_youtube_id(search_string)
+        logger.debug("found youtube id %s, now downloading" % id)
+        filename = self.downloader.download_youtube_id_to(id, self.audio_path)
+        return filename
 
     def download_to_and_return_info(self, search_string):
         info = self.downloader.find_youtube_info(search_string)
         logger.debug("found youtube id %s, now downloading" % info['id'])
-        logger.debug("additional info %s" % json.dumps(info,sort_keys=True, indent=4))
+        logger.debug("additional info %s" % json.dumps(info, sort_keys=True, indent=4))
         filename = self.downloader.download_youtube_id_to(info['id'], self.audio_path)
         info['filename'] = filename
         return info
