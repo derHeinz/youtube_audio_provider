@@ -19,7 +19,7 @@ class TestDownloader(unittest.TestCase):
             'audio_path': 'audio'
         }
         return Downloader(config, AppInfo())
-    
+
     @patch("youtube_audio_provider.downloader.subprocess.run")
     @patch("youtube_audio_provider.downloader.subprocess.check_output")
     def test_download_youtubedl(self, check_output_mock, run_mock):
@@ -46,6 +46,7 @@ class TestDownloader(unittest.TestCase):
 
         download_youtube_id_mock = MagicMock()
         download_youtube_id_mock.stderr = ''
+
         download_youtube_id_mock.stdout = '[ffmpeg] Destination: ' + magic_dir + '/testfile.mp3\n'
         run_mock.side_effect = [find_youtube_info_mock, download_youtube_id_mock]
 
