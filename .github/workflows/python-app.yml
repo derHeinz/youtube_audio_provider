@@ -26,7 +26,9 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install flake8 pytest
+        # utils needed for further steps 
+        pip install flake8 pytest coverage
+        # stuff needed by project
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
@@ -37,3 +39,7 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
+    - name: Coverage
+      run: |
+        coverage run --source=. --omit=*_test.py -m pytest
+        coverage report -m
