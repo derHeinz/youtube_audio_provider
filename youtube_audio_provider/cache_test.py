@@ -2,7 +2,7 @@
 # -*- coding: utf
 
 import unittest
-from youtube_audio_provider.cache import Cache
+from youtube_audio_provider.cache import Cache, Item
 from youtube_audio_provider.appinfo import AppInfo
 
 
@@ -60,3 +60,44 @@ class TestCache(unittest.TestCase):
         self.assertEqual(1, testee.appinfo.get()['cache_size'])
         testee.remove_from_cache_by_search('qqq')
         self.assertEqual(0, testee.appinfo.get()['cache_size'])
+
+    def test_fulltext_search(self):
+        testee = self._create_testee()
+
+        self.assertEqual(0, testee.appinfo.get()['cache_size'])
+        song_1 = 'The Electric Dreamers - Stardust Serenade.mp3'
+        phrase_1 = 'asdf'
+        testee.put_to_cache(phrase_1, song_1)
+        song_2 = 'Luna Shadows - Nebula Whispers.mp3'
+        phrase_2 = 'Lovin%20Luna'
+        testee.put_to_cache(phrase_2, song_2)
+        song_3 = 'Echo Synthesis - Binary Love.mp3'
+        phrase_3 = 'binary%20love'
+        testee.put_to_cache(phrase_3, song_3)
+        song_4 = song_3
+        phrase_4 = 'echo%20love'
+        testee.put_to_cache(phrase_4, song_4)
+        song_5 = 'Midnight Voyager - Celestial Echoes.mp3'
+        phrase_5 = 'mid%20night%20echo'
+        testee.put_to_cache(phrase_5, song_5)
+        song_6 = 'Quantum Beats Collective - Hyperspace Groove.mp3'
+        phrase_6 = 'quantum-beats'
+        testee.put_to_cache(phrase_6, song_6)
+        self.assertEqual(6, testee.appinfo.get()['cache_size'])
+
+        # 1 result exact match
+        res = testee.fulltext_search(song_6)
+        self.assertEqual(1, len(res))
+        self.assertTrue(Item(phrase_6, song_6) in res)
+
+        # artist only, 2 results becaues of exact=False?
+        res = testee.fulltext_search('Echo Synthesis')
+        self.assertEqual(2, len(res))
+        self.assertTrue(Item(phrase_3, song_3) in res)
+        self.assertTrue(Item(phrase_5, song_5) in res)
+
+        # duplicates, word-parts, 2 results
+        res = testee.fulltext_search('Echo')
+        self.assertEqual(2, len(res))
+        self.assertTrue(Item(phrase_3, song_3) in res)
+        self.assertTrue(Item(phrase_5, song_5) in res)

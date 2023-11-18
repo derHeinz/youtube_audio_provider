@@ -5,10 +5,15 @@ import os
 import json
 from json.decoder import JSONDecodeError
 import logging
+from collections import namedtuple
+from typing import List
 
 from youtube_audio_provider.appinfo import AppInfo
+from youtube_audio_provider.finder import Finder
 
 logger = logging.getLogger(__name__)
+
+Item = namedtuple('Item', ['phrase', 'filename'])
 
 
 class Cache(object):
@@ -94,3 +99,20 @@ class Cache(object):
             return search_result
 
         return False
+
+    def fulltext_search(self, quoted_search: str):
+        simplified_string = quoted_search.casefold()
+
+        index = Finder(self.cache)
+        search_result = index.find(simplified_string, exact=False)
+        # i need value to display and key to send to openhab
+        unique_values = set()
+        result_list: List[Item] = []
+        for hit in search_result:
+            key = hit[0]
+            value = hit[1]
+            if value not in unique_values:
+                unique_values.add(value)
+                result_list.append(Item(key, value))
+
+        return result_list

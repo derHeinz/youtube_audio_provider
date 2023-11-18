@@ -12,7 +12,7 @@ from werkzeug.serving import make_server
 from urllib.parse import quote
 import logging
 
-from youtube_audio_provider.cache import Cache
+from youtube_audio_provider.cache import Cache, Item
 from youtube_audio_provider.downloader import Downloader
 from youtube_audio_provider.appinfo import AppInfo
 
@@ -51,6 +51,7 @@ class Webserver(Thread):
         self.app.add_url_rule(rule="/delete_by_search/<string:search>", view_func=self.delete_by_search, methods=['GET', 'POST'])
         self.app.add_url_rule(rule="/search/<string:search>", view_func=self.search, methods=['GET'])
         self.app.add_url_rule(rule="/searchv2/<string:search>", view_func=self.searchv2, methods=['GET'])
+        self.app.add_url_rule(rule="/find_fulltext/<string:search>", view_func=self.find_fulltext, methods=['GET'])
         self.app.add_url_rule(rule="/exit", view_func=self.exit, methods=['GET', 'POST'])
         self.app.add_url_rule(rule="/info", view_func=self.info, methods=['GET'])
 
@@ -151,3 +152,16 @@ class Webserver(Thread):
         # put together the result URL
         result['path'] = self.AUDIO_DIR + result['filename']
         return result
+
+    def find_fulltext(self, search):
+        quoted_search = quote(search)
+        results = []
+        search_result = self.cache.fulltext_search(quoted_search)
+        item: Item
+        for item in search_result:
+            result = {}
+            result['filename'] = item.filename
+            result['by'] = "cache"
+            result['phrase'] = item.phrase
+            results.append(result)
+        return results
