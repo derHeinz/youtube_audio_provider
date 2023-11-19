@@ -1,8 +1,10 @@
 {
 	"webserver_port": 1234,
+    "webserver_cors_allow": true,
 	"ffmpeg_location": "/etc/ffmpeg/bin",
     "cache_export_config": {
         "file": "voice_cache.html",
+        "prefix": "Youtube spiele ",
         "callurl": "http://localhost:8080/rest/items/VoiceCommand"
     }
 }
