@@ -28,7 +28,6 @@ if sys.version_info < (3, 0):
     sys.exit(1)
     
 import string
-import pysos
 import re
 import bisect
 import os.path
@@ -167,24 +166,12 @@ def filt(obj, word, keys):
         
 class Finder:
     
-    def __init__(self, collection, index_file=None, keys=None):
+    def __init__(self, collection, keys=None):
         self._collection = collection
         self._keys = keys
         
-        if index_file:
-            if os.path.exists(index_file):
-                # load it from file
-                print('loading it')
-                self._index = pysos.Dict(index_file)
-            else:
-                # create it
-                print('creating it')
-                self._index = pysos.Dict(index_file)
-                for k,v in index(collection, keys).items():
-                    self._index[k] = v    
-        else:
-            # use an in-memory one
-            self._index = index(collection, keys)    
+        # use an in-memory one
+        self._index = index(collection, keys)    
         self._voc = sorted(self._index.keys())
         
     def words(self, prefix):
