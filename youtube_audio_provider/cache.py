@@ -103,6 +103,7 @@ class Cache(object):
     def fulltext_search(self, quoted_search: str):
         simplified_string = quoted_search.casefold()
 
+        # TODO don't build the index when searching - this is slow!
         index = Finder(self.cache)
         search_result = index.find(simplified_string, exact=False)
         # i need value to display and key to send to openhab

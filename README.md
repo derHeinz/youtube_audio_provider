@@ -6,6 +6,10 @@ You can make a request to the webserver that invokes a youtube search. On reques
 
 For subsequent searches with the same searchterm the local file is immediately served without a youtube search beeing invoked.
 
+Features:
+- auto-download youtube videos as mp3
+- cache mp3
+
 Needs:
 - certain python modules (see requirement.txt)
 - Youtube Downloader ([youtube-dl](https://github.com/ytdl-org/youtube-dl) or [yt-dlp](https://github.com/yt-dlp/yt-dlp)) locally installed
