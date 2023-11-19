@@ -24,6 +24,7 @@ class Cache(object):
         self.audio_file_directory = audio_file_directory
 
         self.cache = {}
+        self.index: Finder = None
         logger.debug("loading cache")
         self._load_cache()
         logger.info("loaded %d entries" % len(self.cache))
@@ -40,6 +41,8 @@ class Cache(object):
 
     def _load_cache(self):
         self._load_cache_from_disk()
+        self.index = Finder(self.cache)
+        # report
         self.appinfo.register('cache_size', len(self.cache))
 
     def _check_file_exists(self, filename: str):
@@ -71,6 +74,8 @@ class Cache(object):
 
     def store_cache(self):
         self._store_cache_to_disk()
+        # update index:
+        self.index = Finder(self.cache)
         # export
         self.exporter.export(self.cache)
         # report
@@ -103,9 +108,7 @@ class Cache(object):
     def fulltext_search(self, quoted_search: str):
         simplified_string = quoted_search.casefold()
 
-        # TODO don't build the index when searching - this is slow!
-        index = Finder(self.cache)
-        search_result = index.find(simplified_string, exact=False)
+        search_result = self.index.find(simplified_string, exact=False)
         # i need value to display and key to send to openhab
         unique_values = set()
         result_list: List[Item] = []

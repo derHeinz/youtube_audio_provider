@@ -101,3 +101,24 @@ class TestCache(unittest.TestCase):
         self.assertEqual(2, len(res))
         self.assertTrue(Item(phrase_3, song_3) in res)
         self.assertTrue(Item(phrase_5, song_5) in res)
+
+    def test_put_remove_fulltext_search(self):
+        testee = self._create_testee()
+
+        # simple put/remove
+        testee.put_to_cache('qqq', 'my file')
+        res = testee.fulltext_search('file')
+        self.assertEqual(1, len(res))
+        self.assertTrue(Item('qqq', 'my file') in res)
+        testee.remove_from_cache_by_search('qqq')
+        res = testee.fulltext_search('file')
+        self.assertEqual(0, len(res))
+
+        # put several
+        testee.put_to_cache('qqq', 'my file')
+        testee.put_to_cache('rrr', 'my file')
+        res = testee.fulltext_search('file')
+        self.assertEqual(1, len(res))
+        testee.remove_from_cache_by_search('qqq')
+        res = testee.fulltext_search('file')
+        self.assertEqual(0, len(res))
