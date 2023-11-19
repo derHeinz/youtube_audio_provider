@@ -40,6 +40,7 @@ class Webserver(Thread):
         self.app.config['port'] = config['webserver_port']
         self.app.config['app_name'] = "Youtube Audio Provider"
         self.app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16mb is enough
+        self.app.config['webserver_cors_allow'] = config.get('webserver_cors_allow', False)
 
         self.app.app_context().push()
         self._server = make_server(host='0.0.0.0', port=self.app.config['port'], app=self.app, threaded=True)
@@ -48,7 +49,9 @@ class Webserver(Thread):
         # register some endpoints
         self.app.add_url_rule(rule="/", view_func=self.index, methods=['GET'])
         self.app.add_url_rule(rule="/audio/<path:path>", view_func=self.audio_file, methods=['GET'])
-        self.app.add_url_rule(rule="/delete_by_search/<string:search>", view_func=self.delete_by_search, methods=['GET', 'POST'])
+        # allow GET, this is for simple browser deletion
+        self.app.add_url_rule(rule="/delete_by_search/<string:search>", 
+                              view_func=self.delete_by_search, methods=['GET', 'POST'])
         self.app.add_url_rule(rule="/search/<string:search>", view_func=self.search, methods=['GET'])
         self.app.add_url_rule(rule="/searchv2/<string:search>", view_func=self.searchv2, methods=['GET'])
         self.app.add_url_rule(rule="/find_fulltext/<string:search>", view_func=self.find_fulltext, methods=['GET'])
@@ -61,12 +64,22 @@ class Webserver(Thread):
     def run(self):
         self._server.serve_forever()
 
+    def _add_cors_to_response(self, response):
+        response.headers.add("Access-Control-Allow-Origin", "*")
+        return response
+
+    def _make_response_and_add_cors(self, something):
+        response = make_response(something)
+        if (self.app.config['webserver_cors_allow']):
+            self._add_cors_to_response(response)
+        return response
+
     def not_found(self, error):
-        return make_response(jsonify({'error': 'Not found'}), 404)
+        return self._make_response_and_add_cors(jsonify({'error': 'Not found'}), 404)
 
     def index(self):
         """Serve the main index page"""
-        return send_from_directory('static', 'index.html')
+        return self._add_cors_to_response(send_from_directory('static', 'index.html'))
 
     def _exit_program(self):
         time.sleep(3)
@@ -78,7 +91,7 @@ class Webserver(Thread):
         thread = Thread(target=self._exit_program)
         thread.start()
 
-        return "shutdown hereafter"
+        return self._make_response_and_add_cors("shutdown hereafter")
 
     def info(self):
         return self.appinfo.get()
@@ -87,7 +100,7 @@ class Webserver(Thread):
         """Serve files from the audio directory"""
         logger.debug("serving file: %s" % path)
         # TODO quickfix "../", won't work properly for other paths, rendering config audio_path unusable
-        return send_from_directory("../" + self.audio_path, path)
+        return self._add_cors_to_response(send_from_directory("../" + self.audio_path, path))
 
     def delete_by_search(self, search):
         """insert a search string (one that was already given) an delete the resource backed by it."""
@@ -98,7 +111,7 @@ class Webserver(Thread):
             os.remove(os.path.join(self.audio_path, name_of_file_or_false))
             return "ok"
 
-        return make_response(jsonify({'error': 'Not found'}), 404)
+        return self._make_response_and_add_cors(jsonify({'error': 'Not found'}), 404)
 
     def search(self, search):
         """search the string, return the url to the mp3."""
@@ -122,10 +135,11 @@ class Webserver(Thread):
             self.cache.put_to_cache(quoted_search, result)
 
         # put together the result URL
-        return self.AUDIO_DIR + result
+        return self._make_response_and_add_cors(self.AUDIO_DIR + result)
 
     def searchv2(self, search):
-        """search the string, return dict containing at least 'filename', 'path', and 'by'. Where path contains the path to the file."""
+        """search the string, return dict containing at least 'filename', 'path', and 'by'.
+        Where path contains the path to the file."""
         # search_query_extended_for youtube_dl
         quoted_search = quote(search)
         logger.debug("searchingv2 for file: %s" % quoted_search)
@@ -142,7 +156,7 @@ class Webserver(Thread):
             # download via youtube-dl
             info = self.downloader.download_to_and_return_info(search)
             if (len(info) < 1):
-                return make_response(jsonify({'error': 'internal error'}), 500)
+                return self._make_response_and_add_cors(jsonify({'error': 'internal error'}), 500)
             result = info
             result['by'] = "download"
 
@@ -151,7 +165,7 @@ class Webserver(Thread):
 
         # put together the result URL
         result['path'] = self.AUDIO_DIR + result['filename']
-        return result
+        self._make_response_and_add_cors(result)
 
     def find_fulltext(self, search):
         quoted_search = quote(search)
@@ -164,4 +178,5 @@ class Webserver(Thread):
             result['by'] = "cache"
             result['phrase'] = item.phrase
             results.append(result)
-        return results
+
+        return self._make_response_and_add_cors(results)
