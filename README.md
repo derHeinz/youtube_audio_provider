@@ -9,6 +9,7 @@ For subsequent searches with the same searchterm the local file is immediately s
 Features:
 - auto-download youtube videos as mp3
 - cache mp3
+- fulltext search in cache
 
 Needs:
 - certain python modules (see requirement.txt)
