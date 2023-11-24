@@ -9,7 +9,7 @@ from threading import Thread
 from flask import Flask, send_from_directory, make_response
 from flask.json import jsonify
 from werkzeug.serving import make_server
-from urllib.parse import quote
+from urllib.parse import quote, unquote_plus
 import logging
 
 from youtube_audio_provider.cache import Cache, Item
@@ -176,7 +176,7 @@ class Webserver(Thread):
             result = {}
             result['filename'] = item.filename
             result['by'] = "cache"
-            result['phrase'] = item.phrase
+            result['phrase'] = unquote_plus(item.phrase)
             results.append(result)
 
         return self._make_response_and_add_cors(results)
