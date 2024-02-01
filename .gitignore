@@ -128,3 +128,4 @@ audio/
 cache.json
 voice_cache.html
 pidfile.pid
+cache.json

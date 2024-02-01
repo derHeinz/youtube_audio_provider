@@ -65,11 +65,12 @@ class Webserver(Thread):
         self._server.serve_forever()
 
     def _add_cors_to_response(self, response):
+        logger.debug('adding cors header')
         response.headers.add("Access-Control-Allow-Origin", "*")
         return response
 
-    def _make_response_and_add_cors(self, something):
-        response = make_response(something)
+    def _make_response_and_add_cors(self, something, status_code=200):
+        response = make_response(something, status_code)
         if (self.app.config['webserver_cors_allow']):
             self._add_cors_to_response(response)
         return response
@@ -165,7 +166,7 @@ class Webserver(Thread):
 
         # put together the result URL
         result['path'] = self.AUDIO_DIR + result['filename']
-        self._make_response_and_add_cors(result)
+        return self._make_response_and_add_cors(result)
 
     def find_fulltext(self, search):
         quoted_search = quote(search)
