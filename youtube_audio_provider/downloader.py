@@ -4,6 +4,8 @@
 import subprocess
 import json
 import logging
+import importlib.util
+
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +18,74 @@ class Downloader(object):
         self.appinfo = info
         self.downloader = self._determine_downloader()
 
+    class YtdlpPython:
+
+        def __init__(self, ffmpeg_location):
+            self.ffmpeg_location = ffmpeg_location
+
+        def get_name(self):
+            return "yt-dlp-python"
+
+        def is_available(self):
+            is_avail = importlib.util.find_spec("yt_dlp") is not None
+            if (is_avail):
+                self.yt_dlp = importlib.import_module('yt_dlp')
+                return self.yt_dlp.version.__version__
+            return None
+
+        def find_youtube_id(self, search_string):
+            return self.find_youtube_info(search_string)['id']
+
+        def find_youtube_info(self, search_string):
+            ydl_opts = {
+                'format': 'bestaudio',
+                'noplaylist':True,
+                'extract_flat': True,  # ← This is key! Only extracts minimal info like id, title, url
+                'quiet': True
+            }
+            with self.yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(f"ytsearch:{search_string}", download=False)
+                first = info['entries'][0]  # first entry (nearly always available)
+
+                return {
+                    "id": first['id'],
+                    "title": first.get('title', None),
+                    "channel": first.get('channel', None)
+                }
+
+        def download_youtube_id_to(self, id, destination_path):
+
+            final_filepath = None
+
+            def post_proecssor_hook(d):
+                if d['status'] == 'finished':
+                    # This is the final file after postprocessing
+                    nonlocal final_filepath
+                    final_filepath = d['info_dict']['filepath']
+
+            urls = [f"https://www.youtube.com/watch?v={id}"]
+            ydl_opts = {
+                'format': 'bestaudio',
+                'quiet': True,
+                'concurrent_fragment_downloads': 4,
+                'ffmpeg_location': self.ffmpeg_location,
+                "outtmpl": destination_path + '/' + '%(title)s.%(ext)s',
+                'extractor_args': {'youtube': {'skip': ['dash', 'hls', 'translated_subs']}},
+                'postprocessors': [{  # Extract audio using ffmpeg
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+                "postprocessor_hooks": [post_proecssor_hook]
+            }
+
+            with self.yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download(urls)
+
+            file_only = final_filepath[len(destination_path):].strip('\\/')
+            
+            return file_only
+
     class Ytdlp:
 
         def __init__(self, ffmpeg_location):
@@ -27,7 +97,7 @@ class Downloader(object):
         def is_available(self):
             try:
                 res = subprocess.check_output(["yt-dlp", "--version"])
-                return res
+                return res.decode("utf-8").strip()
             except Exception:
                 return False
 
@@ -85,7 +155,7 @@ class Downloader(object):
         def is_available(self):
             try:
                 res = subprocess.check_output(["youtube-dl", "--version"])
-                return res
+                return res.decode("utf-8").strip()
             except Exception:
                 return False
 
@@ -143,7 +213,8 @@ class Downloader(object):
         if (is_avail_out):
             logger.info("using " + sometype.get_name())
             self.appinfo.register("downloader.name", sometype.get_name())
-            is_avail_out_printable = is_avail_out.decode("utf-8").strip()
+            
+            is_avail_out_printable = is_avail_out
             is_avail_out_printable = is_avail_out_printable.replace('\\r', '')
             is_avail_out_printable = is_avail_out_printable.replace('\\n', '')
 
@@ -152,7 +223,12 @@ class Downloader(object):
         return False
 
     def _determine_downloader(self):
-        # check yt-dlp available
+        # chck yt-dlp (python) available
+        y = Downloader.YtdlpPython(self.ffmpeg_location)
+        if (self._check_type(y)):
+            return y
+
+        # check yt-dlp native available
         y = Downloader.Ytdlp(self.ffmpeg_location)
         if (self._check_type(y)):
             return y

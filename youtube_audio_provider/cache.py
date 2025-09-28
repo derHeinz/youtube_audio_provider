@@ -32,6 +32,11 @@ class Cache(object):
         self.exporter = exporter
 
     def _load_cache_from_disk(self):
+        # create empty json in case of non-existence
+        if (not os.path.exists(self.cachefile)):
+            with (open(self.cachefile, 'a')) as data_file:
+                json.dump({'dummy': 'dummy'}, data_file)
+        
         # extract cache from persistent cache file
         with open(self.cachefile) as data_file:
             try:
