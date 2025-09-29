@@ -1,11 +1,9 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import subprocess
-import json
 import logging
 import importlib.util
-
+import yt_dlp
 
 logger = logging.getLogger(__name__)
 
@@ -27,229 +25,80 @@ class Downloader(object):
             return "yt-dlp-python"
 
         def is_available(self):
-            is_avail = importlib.util.find_spec("yt_dlp") is not None
-            if (is_avail):
-                self.yt_dlp = importlib.import_module('yt_dlp')
-                return self.yt_dlp.version.__version__
-            return None
-
-        def find_youtube_id(self, search_string):
-            return self.find_youtube_info(search_string)['id']
-
-        def find_youtube_info(self, search_string):
-            ydl_opts = {
-                'format': 'bestaudio',
-                'noplaylist':True,
-                'extract_flat': True,  # ← This is key! Only extracts minimal info like id, title, url
-                'quiet': True
-            }
-            with self.yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(f"ytsearch:{search_string}", download=False)
-                first = info['entries'][0]  # first entry (nearly always available)
-
-                return {
-                    "id": first['id'],
-                    "title": first.get('title', None),
-                    "channel": first.get('channel', None)
-                }
-
-        def download_youtube_id_to(self, id, destination_path):
-
+            return importlib.util.find_spec("yt_dlp") is not None
+        
+        def get_version(self):
+            return yt_dlp.version.__version__
+        
+        def download(self, search_string, destination_path):
             final_filepath = None
+            result = {}
 
-            def post_proecssor_hook(d):
+            def post_processor_hook(d):
                 if d['status'] == 'finished':
                     # This is the final file after postprocessing
                     nonlocal final_filepath
                     final_filepath = d['info_dict']['filepath']
 
-            urls = [f"https://www.youtube.com/watch?v={id}"]
-            ydl_opts = {
+            ydl_opts_extract_info = {
                 'format': 'bestaudio',
+                'noplaylist':True,
+                'extract_flat': True,  # ← This is key! Only extracts minimal info like id, title, url
+                'quiet': True
+            }
+            ydl_opts_download = {
+                'format': 'bestaudio[ext=m4a]/bestaudio',
                 'quiet': True,
                 'concurrent_fragment_downloads': 4,
                 'ffmpeg_location': self.ffmpeg_location,
                 "outtmpl": destination_path + '/' + '%(title)s.%(ext)s',
-                'extractor_args': {'youtube': {'skip': ['dash', 'hls', 'translated_subs']}},
+                'extractor_args': {'youtube': {'player_client': ['web']}},
                 'postprocessors': [{  # Extract audio using ffmpeg
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
                     'preferredquality': '192',
                 }],
-                "postprocessor_hooks": [post_proecssor_hook]
+                "postprocessor_hooks": [post_processor_hook]
             }
+            # merge options for extract_info and for download:
+            ydl_opts = ydl_opts_extract_info | ydl_opts_download
 
-            with self.yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                ydl.download(urls)
+            # only one context to omit duplicate resolution of information
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                all_info = ydl.extract_info(f"ytsearch:{search_string}", download=False)
+                first = all_info['entries'][0]  # first entry (nearly always available)
+
+                id = first['id']
+                result['id'] = id
+                result['title'] = first.get('title', None)
+                result['channel'] = first.get('channel', None)
+                
+                ydl.download([f"https://www.youtube.com/watch?v={id}"])
 
             file_only = final_filepath[len(destination_path):].strip('\\/')
-            
-            return file_only
-
-    class Ytdlp:
-
-        def __init__(self, ffmpeg_location):
-            self.ffmpeg_location = ffmpeg_location
-
-        def get_name(self):
-            return "yt-dlp"
-
-        def is_available(self):
-            try:
-                res = subprocess.check_output(["yt-dlp", "--version"])
-                return res.decode("utf-8").strip()
-            except Exception:
-                return False
-
-        def find_youtube_id(self, search_string):
-            params = ['yt-dlp', 'ytsearch:' + search_string, '--get-id']
-            result = subprocess.run(params, capture_output=True, encoding='utf-8')
-            return str(result.stdout).rstrip("\n")
-
-        def find_youtube_info(self, search_string):
-            params = ['yt-dlp', 'ytsearch:' + search_string, '-j']
-            result = subprocess.run(params, capture_output=True, encoding='utf-8')
-            j = json.loads(str(result.stdout).rstrip("\n"))
-            return {
-                "id": j['id'],
-                "title": j.get('title', None),
-                "channel": j.get('channel', None)
-            }
-
-        def download_youtube_id_to(self, id, destination_path):
-            params = ['yt-dlp', '-x',
-                      '-N', ' 4',
-                      '--audio-format', 'mp3',
-                      '--audio-quality', '0',
-                      '--ffmpeg-location', self.ffmpeg_location]
-
-            if (destination_path is not None):
-                params.append('-o')
-                params.append(destination_path + '/' + '%(title)s.%(ext)s')
-
-            # url that reads the id
-            params.append('https://www.youtube.com/watch?v=' + id)
-            result = subprocess.run(params, capture_output=True, encoding='utf-8')
-
-            if (len(result.stderr) > 0):
-                logger.error("failure running yt-dlp %s" % result.stderr)
-            logger.debug("yt-dlp stdout %s" % result.stdout)
-
-            start_str = '[ExtractAudio] Destination: '
-            start_idx = result.stdout.find(start_str) + len(start_str)
-            end_idx = result.stdout.find('\n', start_idx)
-
-            content = result.stdout[start_idx:end_idx]
-            # cut out the path = cut out length of path
-            file_only = content[len(destination_path):].strip('\\/')
-            return file_only
-
-    class YoutubeDl:
-
-        def __init__(self, ffmpeg_location):
-            self.ffmpeg_location = ffmpeg_location
-
-        def get_name(self):
-            return "youtube-dl"
-
-        def is_available(self):
-            try:
-                res = subprocess.check_output(["youtube-dl", "--version"])
-                return res.decode("utf-8").strip()
-            except Exception:
-                return False
-
-        def find_youtube_id(self, search_string):
-            params = ['youtube-dl',
-                      'ytsearch:' + search_string,
-                      '--get-id']
-            result = subprocess.run(params, capture_output=True, encoding='utf-8')
-
-            return str(result.stdout).rstrip("\n")
-
-        def find_youtube_info(self, search_string):
-            params = ['youtube-dl',
-                      'ytsearch:' + search_string,
-                      '-j']
-            result = subprocess.run(params, capture_output=True, encoding='utf-8')
-
-            j = json.loads(str(result.stdout).rstrip("\n"))
-            return {
-                "id": j['id'],
-                "fulltitle": j.get('fulltitle', None),
-                "title": j.get('title', None),
-                "channel": j.get('channel', None)
-            }
-
-        def download_youtube_id_to(self, id, destination_path):
-            params = ['youtube-dl', '-x',
-                      '--audio-format', 'mp3',
-                      '--audio-quality', '0',
-                      '--ffmpeg-location', self.ffmpeg_location]
-
-            if (destination_path is not None):
-                params.append('-o')
-                params.append(destination_path + '/' + '%(title)s.%(ext)s')
-
-            # url that reads the id
-            params.append('https://www.youtube.com/watch?v=' + id)
-            result = subprocess.run(params, capture_output=True, encoding='utf-8')
-
-            if (len(result.stderr) > 0):
-                logger.error("failure running yoututbe-dl %s" % result.stderr)
-            logger.debug("youtube-dl stdout %s" % result.stdout)
-
-            start_str = '[ffmpeg] Destination: '
-            start_idx = result.stdout.find(start_str) + len(start_str)
-            end_idx = result.stdout.find('\n', start_idx)
-
-            content = result.stdout[start_idx:end_idx]
-            # cut out the path = cut out length of path
-            file_only = content[len(destination_path):].strip('\\/')
-            return file_only
+            result['filename'] = file_only
+            return result
 
     def _check_type(self, sometype):
         is_avail_out = sometype.is_available()
         if (is_avail_out):
             logger.info("using " + sometype.get_name())
             self.appinfo.register("downloader.name", sometype.get_name())
-            
-            is_avail_out_printable = is_avail_out
-            is_avail_out_printable = is_avail_out_printable.replace('\\r', '')
-            is_avail_out_printable = is_avail_out_printable.replace('\\n', '')
-
-            self.appinfo.register("downloader.version", is_avail_out_printable)
+            self.appinfo.register("downloader.version", sometype.get_version())
             return True
         return False
 
     def _determine_downloader(self):
-        # chck yt-dlp (python) available
         y = Downloader.YtdlpPython(self.ffmpeg_location)
         if (self._check_type(y)):
             return y
-
-        # check yt-dlp native available
-        y = Downloader.Ytdlp(self.ffmpeg_location)
-        if (self._check_type(y)):
-            return y
-
-        # check youtube-dl availability
-        y = Downloader.YoutubeDl(self.ffmpeg_location)
-        if (self._check_type(y)):
-            return y
-
+        
         raise ValueError('cannot determine downloader.')
 
     def download_to_and_return_path(self, search_string):
-        id = self.downloader.find_youtube_id(search_string)
-        logger.debug("found youtube id %s, now downloading" % id)
-        filename = self.downloader.download_youtube_id_to(id, self.audio_path)
-        return filename
+        info = self.downloader.download(search_string, self.audio_path)
+        return info['filename']
 
     def download_to_and_return_info(self, search_string):
-        info = self.downloader.find_youtube_info(search_string)
-        logger.debug("found youtube id %s, now downloading" % info['id'])
-        logger.debug("additional info %s" % json.dumps(info, sort_keys=True, indent=4))
-        filename = self.downloader.download_youtube_id_to(info['id'], self.audio_path)
-        info['filename'] = filename
+        info = self.downloader.download(search_string, self.audio_path)
         return info
