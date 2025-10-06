@@ -41,18 +41,19 @@ class Downloader(object):
                     final_filepath = d['info_dict']['filepath']
 
             ydl_opts_extract_info = {
-                'format': 'bestaudio',
+                'format': 'bestaudio/best',
                 'noplaylist':True,
                 'extract_flat': True,  # ← This is key! Only extracts minimal info like id, title, url
                 'quiet': True
             }
             ydl_opts_download = {
-                'format': 'bestaudio[ext=m4a]/bestaudio',
+                'format': 'bestaudio/best',
                 'quiet': True,
                 'concurrent_fragment_downloads': 4,
                 'ffmpeg_location': self.ffmpeg_location,
                 "outtmpl": destination_path + '/' + '%(title)s.%(ext)s',
-                'extractor_args': {'youtube': {'player_client': ['web']}},
+                #'extractor_args': {'youtube': {'player_client': ['web']}}, -> may not be able to download all formats
+                'extractor_args': {'youtube': {'skip': ['dash', 'hls', 'translated_subs']}},
                 'postprocessors': [{  # Extract audio using ffmpeg
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
@@ -72,6 +73,7 @@ class Downloader(object):
                 result['id'] = id
                 result['title'] = first.get('title', None)
                 result['channel'] = first.get('channel', None)
+                result['artist'] = first.get('artist', None)
                 
                 ydl.download([f"https://www.youtube.com/watch?v={id}"])
 

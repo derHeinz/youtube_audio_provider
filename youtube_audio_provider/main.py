@@ -10,7 +10,7 @@ from youtube_audio_provider.webserver import Webserver
 from youtube_audio_provider.downloader import Downloader
 from youtube_audio_provider.exporter.cache_html_exporter import CacheHTMLExporter
 from youtube_audio_provider.appinfo import AppInfo
-from youtube_audio_provider.cache import Cache
+from youtube_audio_provider.cache_db import Cache
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 def setup_logging():
     logging.basicConfig(
         stream=sys.stdout,
-        level=logging.INFO,
+        level=logging.DEBUG,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     logger.info("logger configured")

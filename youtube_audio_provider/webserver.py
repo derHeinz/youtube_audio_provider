@@ -6,13 +6,13 @@
 import os
 import time
 from threading import Thread
-from flask import Flask, send_from_directory, make_response
+from flask import Flask, send_from_directory, make_response, request
 from flask.json import jsonify
 from werkzeug.serving import make_server
 from urllib.parse import quote, unquote_plus
 import logging
 
-from youtube_audio_provider.cache import Cache, Item
+from youtube_audio_provider.cache_db import Cache, Item
 from youtube_audio_provider.downloader import Downloader
 from youtube_audio_provider.appinfo import AppInfo
 
@@ -52,7 +52,6 @@ class Webserver(Thread):
         # allow GET, this is for simple browser deletion
         self.app.add_url_rule(rule="/delete_by_search/<string:search>", 
                               view_func=self.delete_by_search, methods=['GET', 'POST'])
-        self.app.add_url_rule(rule="/search/<string:search>", view_func=self.search, methods=['GET'])
         self.app.add_url_rule(rule="/searchv2/<string:search>", view_func=self.searchv2, methods=['GET'])
         self.app.add_url_rule(rule="/find_fulltext/<string:search>", view_func=self.find_fulltext, methods=['GET'])
         self.app.add_url_rule(rule="/exit", view_func=self.exit, methods=['GET', 'POST'])
@@ -109,34 +108,11 @@ class Webserver(Thread):
 
         name_of_file_or_false = self.cache.remove_from_cache_by_search(quoted_search)
         if (name_of_file_or_false):
+            logger.debug(f"attempting to delete file {name_of_file_or_false}")
             os.remove(os.path.join(self.audio_path, name_of_file_or_false))
             return "ok"
 
         return self._make_response_and_add_cors(jsonify({'error': 'Not found'}), 404)
-
-    def search(self, search):
-        """search the string, return the url to the mp3."""
-        # search_query_extended_for youtube_dl
-        quoted_search = quote(search)
-        logger.debug("searching for file: %s" % quoted_search)
-
-        result = None
-        cache_result = self.cache.retrieve_from_cache(quoted_search)
-        if (cache_result is not None):
-            result = cache_result
-            logger.debug("found in cache")
-        else:
-            logger.debug("not found in cache")
-            # download via youtube-dl
-            result = self.downloader.download_to_and_return_path(search)
-            if (len(result) < 1):
-                return make_response(jsonify({'error': 'internal error'}), 500)
-
-            # put into cache
-            self.cache.put_to_cache(quoted_search, result)
-
-        # put together the result URL
-        return self._make_response_and_add_cors(self.AUDIO_DIR + result)
 
     def searchv2(self, search):
         """search the string, return dict containing at least 'filename', 'path', and 'by'.
@@ -162,7 +138,7 @@ class Webserver(Thread):
             result['by'] = "download"
 
             # put into cache
-            self.cache.put_to_cache(quoted_search, result['filename'])
+            self.cache.put_to_cache(quoted_search, **result)
 
         # put together the result URL
         result['path'] = self.AUDIO_DIR + result['filename']

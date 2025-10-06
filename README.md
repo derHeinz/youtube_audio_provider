@@ -8,10 +8,15 @@ For subsequent searches with the same searchterm the local file is immediately s
 
 Features:
 - auto-download youtube videos as mp3
-- cache mp3
+- store mp3 and cache corresponding searchterms
 - fulltext search in cache
 
 Needs:
 - certain python modules (see requirement.txt)
 - Youtube Downloader ([youtube-dl](https://github.com/ytdl-org/youtube-dl) or [yt-dlp](https://github.com/yt-dlp/yt-dlp)) locally installed
 - MP3 converter ([FFMPEG](https://www.ffmpeg.org/))
+
+TODOs:
+- [ ] alternative storage strategy that holds id, artist, title ...
+- [ ] skip download if already downloaded
+
