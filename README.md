@@ -10,6 +10,8 @@ Features:
 - auto-download youtube videos as mp3
 - store mp3 and cache corresponding searchterms
 - fulltext search in cache
+- cache id and don't redownload contents again if they match
+
 
 Needs:
 - certain python modules (see requirement.txt)

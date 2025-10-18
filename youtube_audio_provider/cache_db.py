@@ -14,7 +14,7 @@ from youtube_audio_provider.appinfo import AppInfo
 
 logger = logging.getLogger(__name__)
 
-Item = namedtuple('Item', ['phrase', 'filename'])
+Item = namedtuple('Item', ['phrase', 'filename', 'title', 'artist'])
 
 class Base(DeclarativeBase):
     pass
@@ -58,6 +58,19 @@ class Cache(object):
         with Session(self.engine) as session:
             self._update_cache_size(session)
 
+    def _entry_to_dict(self, e: Entry):
+        res = {}
+        res['title'] = e.title
+        res['artist'] = e.artist
+        res['filename'] = e.filename
+        return res
+    
+    def _dict_to_entry(self, d):
+        return Entry(id=d.get('id'),
+                  title=d.get('title'),
+                  artist=d.get('artist'),
+                  filename=d.get('filename'))
+
     def _simplify_quoted_search(self, quoted_search: str):
         return quoted_search.casefold()
 
@@ -76,7 +89,7 @@ class Cache(object):
             )
         return session.scalars(stmt).first()
 
-    def retrieve_from_cache(self, quoted_search: str):
+    def retrieve_by_search(self, quoted_search: str) -> dict | None:
         ''' get value from cache,
         checks whether file is available, otherwise invalidates cache '''
 
@@ -86,9 +99,22 @@ class Cache(object):
             e = self._find_entry_with_searchphrase(session, simplified_string)
             if (e is not None):
                 if (self._check_file_exists(e.filename)):
-                    logger.debug(f"entries file exists {e.filename}")
-                    return e.filename
-                
+                    logger.debug(f"entries file exists {e.filename} for phrase {quoted_search}")
+                    return self._entry_to_dict(e)
+
+        return None
+
+    def retrieve_by_id(self, id: str) -> dict | None:
+        with Session(self.engine) as session:
+            stmt = (
+                 select(Entry)
+                 .where(Entry.id == id)
+            )
+            e = session.scalars(stmt).first()
+            if (e is not None):
+                if (self._check_file_exists(e.filename)):
+                    logger.debug(f"entries file exists {e.filename} for id {id}")
+                    return self._entry_to_dict(e)
         return None
     
     def _cache_updated(self, session):
@@ -125,13 +151,31 @@ class Cache(object):
             e = session.scalars(stmt).first()
             # get or create entry
             if (e is None):
-                e = Entry(id=kwargs.get('id'), title=kwargs.get('title'), artist=kwargs.get('artist'), filename=kwargs.get('filename'))
-                session.add(e)              
+                e = self._dict_to_entry(kwargs)
+                session.add(e)
 
             # create phrase
             phrase = SearchPhrase(phrase=simplified_string, entry=e)
             session.add(phrase)
                         
+            session.commit()
+            self._cache_updated(session)
+
+    def add_searchphrase_to_id(self, id, quoted_search):
+        simplified_string = self._simplify_quoted_search(quoted_search)
+
+        with Session(self.engine) as session:
+            stmt = (
+                 select(Entry)
+                 .where(Entry.id == id)
+            )
+            e = session.scalars(stmt).first()
+            if (e is None):
+                raise ValueError(f'entry with id {id} cold not be found, to add a phrase')
+
+            phrase = SearchPhrase(phrase=simplified_string, entry=e)
+            session.add(phrase)
+
             session.commit()
             self._cache_updated(session)
 
@@ -166,6 +210,6 @@ class Cache(object):
             )
         results = session.execute(stmt).all()
         for (e, p) in results:
-            result_list.append(Item(p.phrase, e.filename))
+            result_list.append(Item(p.phrase, e.filename, e.title, e.artist))
 
         return result_list

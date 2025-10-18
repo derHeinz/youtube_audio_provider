@@ -121,24 +121,29 @@ class Webserver(Thread):
         quoted_search = quote(search)
         logger.debug("searchingv2 for file: %s" % quoted_search)
 
-        result = {}
-        resulting_cache_filename = self.cache.retrieve_from_cache(quoted_search)
-        if (resulting_cache_filename is not None):
-            logger.debug("searchingv2 found in cache")
-            result['filename'] = resulting_cache_filename
+        result = self.cache.retrieve_by_search(quoted_search)
+        if (result is not None):
+            logger.debug("searchingv2 found phrase in cache")
             result['by'] = "cache"
 
         else:
             logger.debug("searchingv2 not found in cache")
             # download via youtube-dl
-            info = self.downloader.download_to_and_return_info(search)
-            if (len(info) < 1):
-                return self._make_response_and_add_cors(jsonify({'error': 'internal error'}), 500)
-            result = info
-            result['by'] = "download"
-
-            # put into cache
-            self.cache.put_to_cache(quoted_search, **result)
+            # TODO unclearness with quoted and unquoted search
+            with self.downloader.create_download_context(search) as dl_ctx:
+                id = dl_ctx.get_id()
+                result = self.cache.retrieve_by_id(id)
+                if (result is not None):
+                    logger.debug("searchingv2 found id for phrase in cache")
+                    self.cache.add_searchphrase_to_id(id, quoted_search)
+                    result['by'] = "cached id"
+                    
+                else:
+                    result = dl_ctx.download()
+                    if (len(result) < 1):
+                        return self._make_response_and_add_cors(jsonify({'error': 'internal error'}), 500)
+                    self.cache.put_to_cache(quoted_search, **result)
+                    result['by'] = "download"                    
 
         # put together the result URL
         result['path'] = self.AUDIO_DIR + result['filename']
@@ -152,6 +157,8 @@ class Webserver(Thread):
         for item in search_result:
             result = {}
             result['filename'] = item.filename
+            result['artist'] = item.artist
+            result['title'] = item.title
             result['by'] = "cache"
             result['phrase'] = unquote_plus(item.phrase)
             results.append(result)
