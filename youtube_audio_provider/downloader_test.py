@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import MagicMock, patch
 from youtube_audio_provider.downloader import Downloader
 
+
 class TestDownloadContext(unittest.TestCase):
     def setUp(self):
         self.mock_ydl = MagicMock()
@@ -75,7 +76,3 @@ class TestDownloader(unittest.TestCase):
         self.assertEqual(result['id'], 'test_id')
         self.assertEqual(result['filename'], 'test_file.mp3')
         self.assertEqual(result['title'], 'Test Title')
-
-
-if __name__ == "__main__":
-    unittest.main()

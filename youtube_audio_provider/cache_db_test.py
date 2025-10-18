@@ -3,8 +3,6 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
 from youtube_audio_provider.cache_db import Cache, Entry, SearchPhrase
 
-# filepath: d:\HeinzDaten\Projekte\Python\youtube_audio_provider\youtube_audio_provider\test_cache_db.py
-
 
 class TestCache(unittest.TestCase):
     def setUp(self):
@@ -66,6 +64,7 @@ class TestCache(unittest.TestCase):
         # Assert
         simplified_phrase = quoted_search.casefold()
         self.assertEqual(mock_session.add.call_args[0][0].phrase, simplified_phrase)  # Ensure phrase is simplified
+
     @patch("youtube_audio_provider.cache_db.Session")
     def test_add_searchphrase_to_id_adds_phrase(self, mock_session_class):
         # Arrange

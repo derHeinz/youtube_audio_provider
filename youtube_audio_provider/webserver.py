@@ -6,7 +6,7 @@
 import os
 import time
 from threading import Thread
-from flask import Flask, send_from_directory, make_response, request
+from flask import Flask, send_from_directory, make_response
 from flask.json import jsonify
 from werkzeug.serving import make_server
 from urllib.parse import quote, unquote_plus
@@ -50,7 +50,7 @@ class Webserver(Thread):
         self.app.add_url_rule(rule="/", view_func=self.index, methods=['GET'])
         self.app.add_url_rule(rule="/audio/<path:path>", view_func=self.audio_file, methods=['GET'])
         # allow GET, this is for simple browser deletion
-        self.app.add_url_rule(rule="/delete_by_search/<string:search>", 
+        self.app.add_url_rule(rule="/delete_by_search/<string:search>",
                               view_func=self.delete_by_search, methods=['GET', 'POST'])
         self.app.add_url_rule(rule="/searchv2/<string:search>", view_func=self.searchv2, methods=['GET'])
         self.app.add_url_rule(rule="/find_fulltext/<string:search>", view_func=self.find_fulltext, methods=['GET'])
@@ -137,13 +137,13 @@ class Webserver(Thread):
                     logger.debug("searchingv2 found id for phrase in cache")
                     self.cache.add_searchphrase_to_id(id, quoted_search)
                     result['by'] = "cached id"
-                    
+
                 else:
                     result = dl_ctx.download()
                     if (len(result) < 1):
                         return self._make_response_and_add_cors(jsonify({'error': 'internal error'}), 500)
                     self.cache.put_to_cache(quoted_search, **result)
-                    result['by'] = "download"                    
+                    result['by'] = "download"
 
         # put together the result URL
         result['path'] = self.AUDIO_DIR + result['filename']

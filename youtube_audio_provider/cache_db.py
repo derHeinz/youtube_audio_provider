@@ -16,8 +16,10 @@ logger = logging.getLogger(__name__)
 
 Item = namedtuple('Item', ['phrase', 'filename', 'title', 'artist'])
 
+
 class Base(DeclarativeBase):
     pass
+
 
 class Entry(Base):
     __tablename__ = "entry"
@@ -30,6 +32,7 @@ class Entry(Base):
     phrases: Mapped[List["SearchPhrase"]] = relationship(
         back_populates="entry", cascade="all, delete-orphan"
     )
+
 
 class SearchPhrase(Base):
     __tablename__ = "phrase"
@@ -48,7 +51,7 @@ class Cache(object):
         self.databasefile = "cache.db"
         db_uri = f"sqlite:///{self.databasefile}"
         self.engine = create_engine(db_uri, echo=True)
-        Base.metadata.create_all(self.engine)    
+        Base.metadata.create_all(self.engine)
 
         self.appinfo = info
         self.audio_file_directory = audio_file_directory
@@ -64,12 +67,12 @@ class Cache(object):
         res['artist'] = e.artist
         res['filename'] = e.filename
         return res
-    
+
     def _dict_to_entry(self, d):
         return Entry(id=d.get('id'),
-                  title=d.get('title'),
-                  artist=d.get('artist'),
-                  filename=d.get('filename'))
+                     title=d.get('title'),
+                     artist=d.get('artist'),
+                     filename=d.get('filename'))
 
     def _simplify_quoted_search(self, quoted_search: str):
         return quoted_search.casefold()
@@ -80,7 +83,7 @@ class Cache(object):
         if (os.path.exists(path)):
             return True
         return False
-    
+
     def _find_entry_with_searchphrase(self, session: Session, search_phrase: str):
         stmt = (
                  select(Entry)
@@ -116,16 +119,16 @@ class Cache(object):
                     logger.debug(f"entries file exists {e.filename} for id {id}")
                     return self._entry_to_dict(e)
         return None
-    
+
     def _cache_updated(self, session):
         self._export(session)
         self._update_cache_size(session)
-    
+
     def _update_cache_size(self, session):
         statement = select(func.count()).select_from(Entry)
         count: int = session.execute(statement).scalar()
         self.appinfo.register('cache_size', count)
-    
+
     def _export(self, session):
         data = {}
         stmt = (
@@ -157,7 +160,7 @@ class Cache(object):
             # create phrase
             phrase = SearchPhrase(phrase=simplified_string, entry=e)
             session.add(phrase)
-                        
+
             session.commit()
             self._cache_updated(session)
 
@@ -179,20 +182,20 @@ class Cache(object):
             session.commit()
             self._cache_updated(session)
 
-    def remove_from_cache_by_search(self, quoted_search):        
+    def remove_from_cache_by_search(self, quoted_search):
         simplified_string = self._simplify_quoted_search(quoted_search)
 
         with Session(self.engine) as session:
             e = self._find_entry_with_searchphrase(session, simplified_string)
             if (e is not None):
                 filename = e.filename
-                session.delete(e) # should automagically delete the phrases
+                session.delete(e)  # should automagically delete the phrases
                 session.commit()
                 self._cache_updated(session)
                 return filename
-            
+
             return False
-        
+
     def fulltext_search(self, quoted_search: str):
         simplified_string = self._simplify_quoted_search(quoted_search)
 
@@ -203,9 +206,7 @@ class Cache(object):
                  select(Entry, SearchPhrase)
                  .join(SearchPhrase.entry)
                  .where(
-                     or_(SearchPhrase.phrase == simplified_string,
-                         Entry.filename.contains(simplified_string)
-                     )
+                     or_(SearchPhrase.phrase == simplified_string, Entry.filename.contains(simplified_string))
                  )
             )
         results = session.execute(stmt).all()
