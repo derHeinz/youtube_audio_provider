@@ -10,7 +10,9 @@ from youtube_audio_provider.webserver import Webserver
 from youtube_audio_provider.downloader import Downloader
 from youtube_audio_provider.exporter.cache_html_exporter import CacheHTMLExporter
 from youtube_audio_provider.appinfo import AppInfo
-from youtube_audio_provider.cache_db import Cache
+from youtube_audio_provider.cache_db import Cache as CacheDB
+from youtube_audio_provider.cache import Cache
+from youtube_audio_provider.cache_migrator import CacheToCacheDBMigrator
 
 logger = logging.getLogger(__name__)
 
@@ -47,9 +49,15 @@ def main():
     info.register('config', config)  # put full config into info
 
     exporter = CacheHTMLExporter(config)
-    cache = Cache(exporter, info, config.get('audio_path', 'audio'))
+    cache_db = CacheDB(exporter, info, config.get('audio_path', 'audio'))
     dl = Downloader(config, info)
-    ws = Webserver(config, dl, cache, info)
+
+    # migration
+    old_cache = Cache(config.get('audio_path', 'audio'))
+    migrator = CacheToCacheDBMigrator(old_cache, cache_db, dl)
+    migrator.migrate()
+
+    ws = Webserver(config, dl, cache_db, info)
 
     # incase this is run as deamon
     # ws.setDaemon(True)

@@ -117,7 +117,9 @@ class Cache(object):
             if (e is not None):
                 if (self._check_file_exists(e.filename)):
                     logger.debug(f"entries file exists {e.filename} for id {id}")
-                    return self._entry_to_dict(e)
+                else:
+                    logger.error(f"entries file does not exist {e.filename} for id {id}")
+                return self._entry_to_dict(e)
         return None
 
     def _cache_updated(self, session):
