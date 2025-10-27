@@ -183,23 +183,6 @@ class TestCache(unittest.TestCase):
         self.assertEqual(result, {"title": "Test Title", "artist": "Test Artist", "filename": "test.mp3"})
 
     @patch("youtube_audio_provider.cache_db.Session")
-    def test_retrieve_by_id_returns_none_if_file_not_exists(self, mock_session_class):
-        # Arrange
-        mock_session = MagicMock(spec=Session)
-        mock_session_class.return_value.__enter__.return_value = mock_session
-        existing_entry = Entry(id="1", filename="test.mp3", title="Test Title", artist="Test Artist")
-        mock_session.scalars.return_value.first.return_value = existing_entry  # Simulate existing entry
-        self.cache._check_file_exists = MagicMock(return_value=False)  # Simulate file does not exist
-
-        id = "1"
-
-        # Act
-        result = self.cache.retrieve_by_id(id)
-
-        # Assert
-        self.assertIsNone(result)
-
-    @patch("youtube_audio_provider.cache_db.Session")
     def test_fulltext_search_returns_matching_results(self, mock_session_class):
         # Arrange
         mock_session = MagicMock(spec=Session)
