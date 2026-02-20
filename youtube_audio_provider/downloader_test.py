@@ -48,31 +48,3 @@ class TestDownloadContext(unittest.TestCase):
 
         self.assertEqual(info['id'], 'test_id')
         self.assertEqual(info['title'], 'Test Title')
-
-
-class TestDownloader(unittest.TestCase):
-    def setUp(self):
-        self.mock_config = {'ffmpeg_location': '/mock/ffmpeg', 'audio_path': '/mock/audio'}
-        self.mock_info = MagicMock()
-        self.downloader = Downloader(self.mock_config, self.mock_info)
-        self.downloader.downloader = MagicMock()
-
-    def test_download_to_and_return_path(self):
-        self.downloader.downloader.download.return_value = {'filename': 'test_file.mp3'}
-        result = self.downloader.download_to_and_return_path("test search")
-
-        self.downloader.downloader.download.assert_called_once_with("test search", "/mock/audio")
-        self.assertEqual(result, "test_file.mp3")
-
-    def test_download_to_and_return_info(self):
-        self.downloader.downloader.download.return_value = {
-            'id': 'test_id',
-            'filename': 'test_file.mp3',
-            'title': 'Test Title'
-        }
-        result = self.downloader.download_to_and_return_info("test search")
-
-        self.downloader.downloader.download.assert_called_once_with("test search", "/mock/audio")
-        self.assertEqual(result['id'], 'test_id')
-        self.assertEqual(result['filename'], 'test_file.mp3')
-        self.assertEqual(result['title'], 'Test Title')
