@@ -6,10 +6,10 @@
 import os
 import time
 from threading import Thread
-from flask import Flask, send_from_directory, make_response
+from flask import Flask, send_from_directory, make_response, render_template
 from flask.json import jsonify
 from werkzeug.serving import make_server
-from urllib.parse import quote, unquote_plus
+from urllib.parse import quote
 import logging
 
 from youtube_audio_provider.cache_db import Cache, Item
@@ -30,6 +30,11 @@ class Webserver(Thread):
         super(Webserver, self).__init__()
 
         self.audio_path = config.get('audio_path', 'audio')
+
+        cache_export_config = config.get('cache_export_config', None)
+        self.audio_search_callurl = cache_export_config.get('callurl', None)
+        self.audio_search_prefix = cache_export_config.get('prefix', None)
+
         # TODO calculate audio_path as seen by flask with it's root_path: self.app.root_path
         info.register('audio_directory', os.path.abspath(self.audio_path))
         self.downloader = downloader
@@ -48,6 +53,7 @@ class Webserver(Thread):
 
         # register some endpoints
         self.app.add_url_rule(rule="/", view_func=self.index, methods=['GET'])
+        self.app.add_url_rule(rule="/audio_search", view_func=self.audio_search, methods=['GET'])
         self.app.add_url_rule(rule="/audio/<path:path>", view_func=self.audio_file, methods=['GET'])
         # allow GET, this is for simple browser deletion
         self.app.add_url_rule(rule="/delete_by_search/<string:search>",
@@ -80,6 +86,14 @@ class Webserver(Thread):
     def index(self):
         """Serve the main index page"""
         return self._add_cors_to_response(send_from_directory('static', 'index.html'))
+    
+    def audio_search(self):
+        """Serve the audio_search page"""
+        config = {
+            "audio_search_callurl": self.audio_search_callurl,
+            "audio_search_prefix": self.audio_search_prefix
+        }
+        return self._make_response_and_add_cors(render_template('audio_search.html', **config))
 
     def _exit_program(self):
         time.sleep(3)
@@ -160,7 +174,6 @@ class Webserver(Thread):
             result['artist'] = item.artist
             result['title'] = item.title
             result['by'] = "cache"
-            result['phrase'] = unquote_plus(item.phrase)
             results.append(result)
 
         return self._make_response_and_add_cors(results)

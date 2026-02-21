@@ -1,6 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
 import sys
 import json
 import os
@@ -20,7 +17,7 @@ logger = logging.getLogger(__name__)
 def setup_logging():
     logging.basicConfig(
         stream=sys.stdout,
-        level=logging.DEBUG,
+        level=logging.NOTSET,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     logger.info("logger configured")
@@ -44,6 +41,7 @@ def main():
     setup_logging()
     logger.debug(f'PID: {os.getpid()}')
     config = load_config()
+    logging.getLogger().setLevel(config.get('loglevel', 'INFO'))
 
     info = AppInfo()
     info.register('config', config)  # put full config into info
