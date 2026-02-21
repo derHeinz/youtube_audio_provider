@@ -11,7 +11,7 @@ from youtube_audio_provider.appinfo import AppInfo
 
 logger = logging.getLogger(__name__)
 
-Item = namedtuple('Item', ['filename', 'title', 'artist'])
+Item = namedtuple('Item', ['phrase', 'filename', 'title', 'artist'])
 
 
 class Base(DeclarativeBase):
@@ -198,19 +198,23 @@ class Cache(object):
     def fulltext_search(self, quoted_search: str):
         simplified_string = self._simplify_quoted_search(quoted_search)
 
-        result_list: List[Item] = []
-
         with Session(self.engine) as session:
             stmt = (
-                 select(Entry)
+                 select(Entry, SearchPhrase)
                  .join(SearchPhrase.entry)
                  .where(
-                     or_(SearchPhrase.phrase == simplified_string, Entry.filename.contains(simplified_string)),
+                     or_(SearchPhrase.phrase == simplified_string, 
+                         Entry.filename.contains(simplified_string)),
                  )
-                 .distinct(Entry.id)
             )
-        results = session.execute(stmt).scalars().all()
-        for (e) in results:
-            result_list.append(Item(e.filename, e.title, e.artist))
+        results = (session
+            .execute(stmt)
+            .unique(lambda row: row[0].id) # only unique entries, even if multiple phrases match -> take first
+            .all()
+        )
+
+        result_list: List[Item] = []
+        for (e, p) in results:
+            result_list.append(Item(p.phrase, e.filename, e.title, e.artist))
 
         return result_list

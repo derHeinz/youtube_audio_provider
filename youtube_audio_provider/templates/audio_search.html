@@ -64,18 +64,20 @@
                 return
             }
 
-            console.log('playing: ' + input.value);
-            console.log('sending: ' + selectedPhrase);
+            
+            
 
             var prefix = "{{ audio_search_prefix }}";            
             
-            const xhr = new XMLHttpRequest()
+            const xhr = new XMLHttpRequest();
             xhr.onload = function() {
                 // nothing
             };
             
-            xhr.open("POST", "{{ audio_search_callurl}}");
+            xhr.open("POST", "{{ audio_search_callurl }}");
             xhr.setRequestHeader("Content-type", "text/plain");
+            console.log('playing: ' + input.value);
+            console.log('sending: ' + prefix + selectedPhrase);
             xhr.send(prefix + selectedPhrase);
             // ignore result
 
@@ -104,7 +106,7 @@
         }
 
         var search = function(value) {
-            var theUrl = '/find_fulltext/' + value
+            var theUrl = '/find_fulltext/' + value;
 
             var xmlHttp = new XMLHttpRequest();
             xmlHttp.onreadystatechange = function() { 
@@ -118,12 +120,12 @@
         }
 
         input.addEventListener("input", function() {
-            removeSuggestions()
-            const enteredValue = this.value.toLowerCase().trim()
+            removeSuggestions();
+            const enteredValue = this.value.toLowerCase().trim();
             if (enteredValue?.length < 2) {
                 return // no suggestions for small inputs
             }
-            search(enteredValue)
+            search(enteredValue);
         });
     </script>
 </html>

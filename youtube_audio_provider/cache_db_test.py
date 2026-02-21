@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
-from youtube_audio_provider.cache_db import Cache, Entry
+from youtube_audio_provider.cache_db import Cache, Entry, SearchPhrase
 
 
 class TestCache(unittest.TestCase):
@@ -181,8 +181,9 @@ class TestCache(unittest.TestCase):
     def test_fulltext_search_returns_matching_results(self, mock_session_class):
         # Arrange
         mock_session = self._mock_session(mock_session_class)
-        mock_session.execute.return_value.scalars.return_value.all.return_value = [
-            (Entry(id="1", filename="test.mp3", title="Test Title", artist="Test Artist"))
+        mock_session.execute.return_value.unique.return_value.all.return_value = [
+            (Entry(id="1", filename="test.mp3", title="Test Title", artist="Test Artist"), 
+             SearchPhrase(phrase="Test Phrase"))
         ]  # Simulate matching results
 
         quoted_search = "Test"
