@@ -1,7 +1,7 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session
-from youtube_audio_provider.cache_db import Cache, Entry, SearchPhrase
+from youtube_audio_provider.cache_db import Cache, Entry
 
 
 class TestCache(unittest.TestCase):

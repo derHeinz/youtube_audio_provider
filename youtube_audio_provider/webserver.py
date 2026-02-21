@@ -1,8 +1,3 @@
-#!/usr/bin/python3
-# -*- coding: utf-8 -*-
-
-""" webserver serving mp3 files for DLNA. """
-
 import os
 import time
 from threading import Thread
