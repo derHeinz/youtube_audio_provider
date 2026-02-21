@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+    <head>
+		<style>
+        * { 
+            box-sizing: border-box; 
+        }
+        body {
+            font: 16px Arial;
+        }
+        .autocomplete {
+            position: relative;
+            display: inline-block;
+        }
+        .bordered-text {
+            border: 1px solid transparent;
+            font-size: 16px
+        }
+        input[type=text] {
+            background-color: #f1f1f1;
+        }
+        button {
+            background-color: DodgerBlue;
+            color: #fff;
+            width: 80px;
+        }
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-bottom: none;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+        }
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+        </style>
+        
+    </head>
+    <div class="autocomplete">
+        <input type="text" id="search-box" placeholder="Type something..." class="bordered-text" size="24">
+        <button onclick="play()" class="bordered-text">&#9658;</button>
+        <div id="autocomplete-parent" class="autocomplete-items bordered-text"></div>
+    </div>
+    
+    <script>
+
+        let selectedPhrase = "";
+        
+        const input = document.getElementById("search-box");
+        const list = document.getElementById("autocomplete-parent");
+
+        var play = function() {
+
+            if (!input.value || !selectedPhrase) {
+                return
+            }
+
+            console.log('playing: ' + input.value);
+            console.log('sending: ' + selectedPhrase);
+
+            var prefix = "{{ audio_search_prefix }}";            
+            
+            const xhr = new XMLHttpRequest()
+            xhr.onload = function() {
+                // nothing
+            };
+            
+            xhr.open("POST", "{{ audio_search_callurl}}");
+            xhr.setRequestHeader("Content-type", "text/plain");
+            xhr.send(prefix + selectedPhrase);
+            // ignore result
+
+            // Reset
+            input.value = "";
+            selectedPhrase = "";
+        }
+
+        var refreshSuggestions = function(searchResults) {
+            if (searchResults.length) {
+                searchResults.forEach(function(suggestion) {
+                    const item = document.createElement("div");
+                    item.textContent = suggestion.filename;
+                    item.addEventListener("click", function() {
+                        input.value = suggestion.filename;
+                        selectedPhrase = suggestion.phrase;
+                        list.innerHTML = "";
+                    });
+                    list.appendChild(item);
+                });
+            }
+        }
+
+        var removeSuggestions = function() {
+            list.innerHTML = ""; // remove all suggestions
+        }
+
+        var search = function(value) {
+            var theUrl = '/find_fulltext/' + value
+
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.onreadystatechange = function() { 
+                if (xmlHttp.readyState == 4 && xmlHttp.status == 200)
+                    if (xmlHttp.responseText) {
+                        refreshSuggestions(JSON.parse(xmlHttp.responseText));
+                    }
+            }
+            xmlHttp.open("GET", theUrl, true); // true for asynchronous 
+            xmlHttp.send(null);
+        }
+
+        input.addEventListener("input", function() {
+            removeSuggestions()
+            const enteredValue = this.value.toLowerCase().trim()
+            if (enteredValue?.length < 2) {
+                return // no suggestions for small inputs
+            }
+            search(enteredValue)
+        });
+    </script>
+</html>

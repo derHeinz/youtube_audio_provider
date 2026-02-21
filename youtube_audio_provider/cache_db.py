@@ -6,7 +6,7 @@ import logging
 from collections import namedtuple
 from typing import List, Optional
 
-from sqlalchemy import ForeignKey, String, func, create_engine, select, or_
+from sqlalchemy import ForeignKey, String, func, create_engine, select, or_, and_
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.orm import Session
 
@@ -14,7 +14,7 @@ from youtube_audio_provider.appinfo import AppInfo
 
 logger = logging.getLogger(__name__)
 
-Item = namedtuple('Item', ['phrase', 'filename', 'title', 'artist'])
+Item = namedtuple('Item', ['filename', 'title', 'artist'])
 
 
 class Base(DeclarativeBase):
@@ -205,14 +205,15 @@ class Cache(object):
 
         with Session(self.engine) as session:
             stmt = (
-                 select(Entry, SearchPhrase)
+                 select(Entry)
                  .join(SearchPhrase.entry)
                  .where(
-                     or_(SearchPhrase.phrase == simplified_string, Entry.filename.contains(simplified_string))
+                     or_(SearchPhrase.phrase == simplified_string, Entry.filename.contains(simplified_string)),
                  )
+                 .distinct(Entry.id)
             )
-        results = session.execute(stmt).all()
-        for (e, p) in results:
-            result_list.append(Item(p.phrase, e.filename, e.title, e.artist))
+        results = session.execute(stmt).scalars().all()
+        for (e) in results:
+            result_list.append(Item(e.filename, e.title, e.artist))
 
         return result_list
